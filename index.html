@@ -35,29 +35,43 @@
       chatEl.scrollTop = chatEl.scrollHeight;
     }
 
-    async function send() {
-      const content = inputEl.value.trim();
-      if (!content) return;
-      appendMessage('user', content);
-      inputEl.value = '';
-      sendBtn.disabled = true;
-      appendMessage('assistant', 'Thinking...');
-      try {
-        const res = await fetch(BACKEND_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: [{ role: 'user', content }] })
-        });
-        const data = await res.json();
-        chatEl.lastChild.remove();
-        appendMessage('assistant', data.answer || 'No response');
-      } catch (err) {
-        chatEl.lastChild.remove();
-        appendMessage('assistant', 'Error connecting to server.');
-      } finally {
-        sendBtn.disabled = false;
-      }
+   async function send() {
+  const content = inputEl.value.trim();
+  if (!content) return;
+  appendMessage('user', content);
+  inputEl.value = '';
+  sendBtn.disabled = true;
+  appendMessage('assistant', 'Thinking...');
+
+  try {
+    const res = await fetch(BACKEND_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'user', content }] })
+    });
+    const data = await res.json();
+
+    chatEl.lastChild.remove(); // remove "Thinking..."
+
+    if (!res.ok || data.error) {
+      appendMessage('assistant',
+        `Server error: ${data.error || res.status}\n${data.detail ? `Details: ${data.detail}` : ''}`);
+      return;
     }
+
+    if (data.answer && data.answer.trim()) {
+      appendMessage('assistant', data.answer);
+    } else {
+      appendMessage('assistant', `No response from model.\n${data.debug ? `Debug: ${JSON.stringify(data.debug)}` : ''}`);
+    }
+  } catch (err) {
+    chatEl.lastChild.remove();
+    appendMessage('assistant', `Network error: ${err.message}`);
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+
 
     sendBtn.addEventListener('click', send);
     inputEl.addEventListener('keydown', (e) => {
