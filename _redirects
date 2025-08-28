@@ -1,4 +1,2 @@
 /login.html   /login.html   200
-/admin.html   /login.html   302!   Role!=admin
-/*   /:splat   200!   Role=authenticated
-/*   /login.html   302!
+/*            /index.html   200
