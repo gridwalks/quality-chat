@@ -1,25 +1,27 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sign in · Quality Chat</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script defer src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'/><meta name='viewport' content='width=device-width, initial-scale=1'/>
+<title>Sign in · Quality Chat</title>
+  <link rel='preconnect' href='https://fonts.googleapis.com'>
+  <link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>
+  <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap' rel='stylesheet'>
+  <script src='https://cdn.tailwindcss.com'></script>
+  <script defer src='https://identity.netlify.com/v1/netlify-identity-widget.js'></script>
+  <style>
+    :root { --brand:#4F46E5; --brand-600:#4F46E5; --brand-700:#4338CA; }
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    .btn-brand{background:var(--brand-600);color:#fff}
+    .btn-brand:hover{background:var(--brand-700)}
+  </style>
 </head>
-<body class="bg-gray-50 text-gray-900" style="font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial;">
-  <div class="min-h-screen flex items-center justify-center p-6">
-    <div class="bg-white border rounded-2xl shadow p-6 max-w-sm w-full">
-      <h1 class="text-xl font-semibold mb-2">Sign in to Quality Chat</h1>
-      <p class="text-sm text-gray-600 mb-4">Use your email to receive a magic link.</p>
-      <button id="open" class="w-full px-3 py-2 rounded-xl bg-indigo-600 text-white">Open sign-in</button>
-      <p class="text-xs text-gray-500 mt-3">No account? Your admin must invite you.</p>
-      <a href="/index.html" class="text-sm text-indigo-600 hover:underline inline-block mt-4">← Back</a>
-    </div>
+<body class='bg-gray-50 text-gray-900'><div class='min-h-screen flex items-center justify-center p-6'>
+  <div class='bg-white border rounded-2xl shadow p-6 max-w-sm w-full'>
+    <h1 class='text-xl font-semibold mb-2'>Sign in to Quality Chat</h1>
+    <p class='text-sm text-gray-600 mb-4'>Use your email to receive a magic link.</p>
+    <button id='open' class='w-full px-3 py-2 rounded-xl btn-brand'>Open sign-in</button>
+    <p class='text-xs text-gray-500 mt-3'>No account? Your admin must invite you.</p>
+    <a href='/index.html' class='text-sm text-indigo-600 hover:underline inline-block mt-4'>← Back</a>
   </div>
-  <script>
-    document.getElementById('open').addEventListener('click', () => { if (window.netlifyIdentity) window.netlifyIdentity.open('login'); else alert('Identity widget not loaded.'); });
-    document.addEventListener('DOMContentLoaded', () => { if (window.netlifyIdentity) { window.netlifyIdentity.on('login', () => window.location.assign('/chat.html')); window.netlifyIdentity.init(); } });
-  </script>
-</body>
-</html>
+</div>
+<script>
+  document.getElementById('open').addEventListener('click',()=>{ if(window.netlifyIdentity) window.netlifyIdentity.open('login'); else alert('Identity widget not loaded.'); });
+  document.addEventListener('DOMContentLoaded',()=>{ if(window.netlifyIdentity){ window.netlifyIdentity.on('login',()=> location.assign('/chat.html')); window.netlifyIdentity.init(); } });
+</script></body></html>

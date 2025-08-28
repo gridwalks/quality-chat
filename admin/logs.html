@@ -1,0 +1,43 @@
+<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'/><meta name='viewport' content='width=device-width, initial-scale=1'/>
+<title>Admin · Usage Logs</title>
+  <link rel='preconnect' href='https://fonts.googleapis.com'>
+  <link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>
+  <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap' rel='stylesheet'>
+  <script src='https://cdn.tailwindcss.com'></script>
+  <script defer src='https://identity.netlify.com/v1/netlify-identity-widget.js'></script>
+  <style>
+    :root { --brand:#4F46E5; --brand-600:#4F46E5; --brand-700:#4338CA; }
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    .btn-brand{background:var(--brand-600);color:#fff}
+    .btn-brand:hover{background:var(--brand-700)}
+  </style>
+</head>
+<body class='bg-gray-50 text-gray-900'>
+<div class='max-w-5xl mx-auto p-6'>
+  <div class='flex items-center justify-between mb-6'><h1 class='text-2xl font-bold'>Usage Logs</h1><a href='/admin/' class='px-3 py-2 rounded border bg-white'>← Admin</a></div>
+  <div id='auth' class='text-sm text-gray-600 mb-4'>Checking login…</div>
+  <div class='flex flex-wrap gap-2 mb-3'>
+    <button id='logsRefresh' class='px-3 py-2 rounded border bg-white' disabled>Refresh</button>
+    <button id='logsJson' class='px-3 py-2 rounded border bg-white' disabled>Download JSON</button>
+    <button id='logsCsv' class='px-3 py-2 rounded border bg-white' disabled>Download CSV</button>
+    <button id='logsClear' class='px-3 py-2 rounded btn-brand text-white' disabled>Clear (Archive)</button>
+  </div>
+  <div class='overflow-auto max-h-96 border rounded'>
+    <table class='w-full text-sm'><thead class='bg-gray-100 sticky top-0'><tr><th class='text-left p-2'>Time</th><th class='text-left p-2'>User</th><th class='text-left p-2'>Question</th><th class='text-left p-2'>Answer (snippet)</th></tr></thead><tbody id='logsTable'></tbody></table>
+  </div>
+</div>
+<script>
+  const auth=document.getElementById('auth'); const logsRefresh=document.getElementById('logsRefresh'); const logsJson=document.getElementById('logsJson'); const logsCsv=document.getElementById('logsCsv'); const logsClear=document.getElementById('logsClear'); const logsTable=document.getElementById('logsTable'); const LOG_URL='/.netlify/functions/usage-logger';
+  function enable(b){ [logsRefresh,logsJson,logsCsv,logsClear].forEach(x=>x.disabled=!b); }
+  function gate(user){ if(!user) return location.replace('/login.html'); const roles=(user.app_metadata&&user.app_metadata.roles)||[]; if(!roles.includes('admin')){ auth.textContent='Admin role required.'; return; } auth.textContent='Signed in as '+user.email+' (admin)'; enable(true); }
+  document.addEventListener('DOMContentLoaded',()=>{ if(window.netlifyIdentity){ window.netlifyIdentity.on('init',gate); window.netlifyIdentity.init(); } else { location.replace('/login.html'); } });
+  function snippet(s){ if(!s) return ''; const t=String(s).replace(/\s+/g,' ').trim(); return t.length>120? t.slice(0,117)+'…': t; }
+  async function fetchLogs(){ const res=await fetch(LOG_URL,{method:'GET'}); if(!res.ok){ logsTable.innerHTML='<tr><td class="p-2 text-red-600" colspan="4">Failed to load logs</td></tr>'; return []; } const arr=await res.json(); return Array.isArray(arr)? arr: []; }
+  function render(rows){ logsTable.innerHTML=''; if(!rows.length){ logsTable.innerHTML='<tr><td class="p-2 text-gray-500" colspan="4">No entries.</td></tr>'; return; } rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td class="p-2 align-top">${r.time||''}</td><td class="p-2 align-top">${r.email||'anonymous'}</td><td class="p-2 align-top">${snippet(r.question)}</td><td class="p-2 align-top">${snippet(r.answer)}</td>`; logsTable.appendChild(tr); }); }
+  async function refresh(){ const all=await fetchLogs(); const last100=all.slice(-100).reverse(); render(last100); }
+  logsRefresh.addEventListener('click', refresh);
+  logsJson.addEventListener('click', async()=>{ const all=await fetchLogs(); const blob=new Blob([JSON.stringify(all,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='usage.json'; a.click(); URL.revokeObjectURL(url); });
+  logsCsv.addEventListener('click', async()=>{ const all=await fetchLogs(); const lines=['time,email,question,answer'].concat(all.map(r=>[r.time||'',r.email||'',r.question||'',r.answer||''].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(','))); const blob=new Blob([lines.join('\n')],{type:'text/csv'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='usage.csv'; a.click(); URL.revokeObjectURL(url); });
+  logsClear.addEventListener('click', async()=>{ if(!confirm('Archive and clear all logs?')) return; const res=await fetch(LOG_URL,{method:'DELETE'}); if(res.ok){ alert('Logs archived and cleared.'); refresh(); } else { alert('Failed to clear logs.'); } });
+</script>
+</body></html>

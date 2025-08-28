@@ -1,119 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Quality Chat</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script defer src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'/><meta name='viewport' content='width=device-width, initial-scale=1'/>
+<title>Quality Chat</title>
+  <link rel='preconnect' href='https://fonts.googleapis.com'>
+  <link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>
+  <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap' rel='stylesheet'>
+  <script src='https://cdn.tailwindcss.com'></script>
+  <script defer src='https://identity.netlify.com/v1/netlify-identity-widget.js'></script>
   <style>
-    body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial; }
-    .fade-in { animation: fade-in .18s ease-out; }
-    @keyframes fade-in { from {opacity:.0; transform: translateY(4px)} to {opacity:1; transform:none} }
-    .msg { white-space: pre-wrap; }
+    :root { --brand:#4F46E5; --brand-600:#4F46E5; --brand-700:#4338CA; }
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    .btn-brand{background:var(--brand-600);color:#fff}
+    .btn-brand:hover{background:var(--brand-700)}
   </style>
 </head>
-<body class="bg-gray-50 text-gray-900">
-  <div class="min-h-screen flex flex-col">
-    <header class="bg-white border-b sticky top-0 z-10">
-      <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <a href="/index.html" class="h-9 w-9 rounded-2xl bg-indigo-600 flex items-center justify-center shadow text-white font-bold">Q</a>
-          <div>
-            <h1 class="text-lg font-semibold leading-tight">Quality Chat</h1>
-            <p class="text-xs text-gray-500 -mt-0.5">Ask anything about Quality & Compliance</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-3 text-sm">
-          <a href="/login.html" class="px-3 py-1.5 rounded border bg-white hover:bg-gray-50">Sign in</a>
-          <button id="logoutBtn" class="px-3 py-1.5 rounded border bg-white hover:bg-gray-50 hidden">Log out</button>
-          <a href="/admin.html" class="text-indigo-600 hover:underline">Admin</a>
-          <a href="#" id="clearBtn" class="text-gray-500 hover:text-gray-700">Clear chat</a>
-        </div>
-      </div>
-    </header>
-
-    <main class="flex-1">
-      <div class="max-w-4xl mx-auto px-4 py-6">
-        <div id="whoami" class="text-xs text-gray-500 mb-2"></div>
-        <section id="suggestions" class="grid gap-2 grid-cols-1 sm:grid-cols-2 mb-4">
-          <button class="px-3 py-2 rounded-xl border bg-white text-left hover:bg-gray-50" data-suggest>
-            How do 21 CFR Part 11 and EU Annex 11 differ?
-          </button>
-        </section>
-
-        <section id="chat" class="space-y-4"></section>
-      </div>
-    </main>
-
-    <footer class="sticky bottom-0 bg-white border-t">
-      <div class="max-w-4xl mx-auto px-4 py-3">
-        <div class="rounded-2xl border bg-white shadow-sm p-2">
-          <textarea id="input" rows="2" placeholder="Ask a quality question… (Shift+Enter = newline)" class="w-full resize-none outline-none p-2 rounded-xl"></textarea>
-          <div class="flex items-center justify-between px-1 pb-1">
-            <small class="text-gray-500">Powered by OpenAI • Your key stays on the server</small>
-            <button id="send" class="px-3 py-1.5 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-50">Send</button>
-          </div>
-        </div>
-      </div>
-    </footer>
-  </div>
-
-  <script>
-    const META = document.querySelector('meta[name="quality-chat-backend"]');
-    const BACKEND_URL = (META && META.content) || "/.netlify/functions/chat";
-    const SEARCH_URL = "/.netlify/functions/search";
-    const LOG_URL = "/.netlify/functions/usage-logger";
-
-    const chatEl = document.getElementById('chat');
-    const inputEl = document.getElementById('input');
-    const sendBtn = document.getElementById('send');
-    const whoamiEl = document.getElementById('whoami');
-    const logoutBtn = document.getElementById('logoutBtn');
-
-    const sysPrompt = `You are Quality Chat, a helpful assistant for quality & compliance questions in life sciences.`;
-
-    function escapeHtml(text) { const div=document.createElement('div'); div.innerText=text; return div.innerHTML; }
-    function appendMessage(role, text) {
-      const bubble = document.createElement('div');
-      bubble.className = `fade-in flex gap-3 ${role==='user' ? 'justify-end' : ''}`;
-      const isUser = role === 'user';
-      bubble.innerHTML = `<div class="max-w-[85%] ${isUser ? 'bg-indigo-600 text-white' : 'bg-white'} rounded-2xl border ${isUser ? 'border-indigo-600' : 'border-gray-200'} p-3 shadow-sm"><div class="msg text-sm">${escapeHtml(text)}</div></div>`;
-      chatEl.appendChild(bubble);
-      chatEl.scrollTop = chatEl.scrollHeight;
-    }
-
-    // Gate: require login
-    document.addEventListener('DOMContentLoaded', () => {
-      if (window.netlifyIdentity) {
-        window.netlifyIdentity.on('init', user => { if (!user) window.location.replace('/login.html'); else { whoamiEl.textContent = "Signed in as " + (user.email || ""); logoutBtn.classList.remove('hidden'); } });
-        window.netlifyIdentity.on('logout', () => window.location.assign('/login.html'));
-        window.netlifyIdentity.init();
-      } else { window.location.assign('/login.html'); }
-      logoutBtn.addEventListener('click', () => window.netlifyIdentity && window.netlifyIdentity.logout());
-    });
-
-    async function send() {
-      const content = inputEl.value.trim(); if (!content) return;
-      appendMessage('user', content); inputEl.value=''; sendBtn.disabled=true; appendMessage('assistant','Thinking…');
-      try {
-        const sres = await fetch(SEARCH_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ q: content }) });
-        let contextBlock=''; if (sres.ok) { const sj=await sres.json(); const results=sj.results||[]; if(results.length){ contextBlock = results.map(r => `• ${r.title}: ${r.text}`).join("\n"); } }
-        const res = await fetch(BACKEND_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ messages:[ {role:'system',content:sysPrompt}, {role:'system',content: contextBlock || 'No extra context'}, {role:'user',content} ] }) });
-        const data = await res.json(); chatEl.lastElementChild.remove();
-        if (!res.ok || data.error) { appendMessage('assistant', `Server error: ${data.error || res.status}`); return; }
-        if (data.answer && data.answer.trim()) {
-          appendMessage('assistant', data.answer);
-          try { fetch(LOG_URL, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ question: content, answer: data.answer }) }); } catch (e) {}
-        } else { appendMessage('assistant','No response from model.'); }
-      } catch { chatEl.lastElementChild.remove(); appendMessage('assistant','There was an error reaching the server.'); }
-      finally { sendBtn.disabled=false; }
-    }
-    sendBtn.addEventListener('click', send);
-    document.getElementById('input').addEventListener('keydown', (e)=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); }});
-  </script>
-</body>
-</html>
+<body class='bg-gray-50 text-gray-900'>
+<div class='min-h-screen flex flex-col'>
+  <header class='bg-white border-b sticky top-0 z-10'>
+    <div class='max-w-4xl mx-auto px-4 py-4 flex items-center justify-between'>
+      <div class='flex items-center gap-3'><a href='/index.html'><img src='/assets/logo.svg' class='h-9 w-9 rounded-2xl shadow' alt=''/></a><div><h1 class='text-lg font-semibold'>Quality Chat</h1><p class='text-xs text-gray-500 -mt-0.5'>Ask anything about QA & Compliance</p></div></div>
+      <div class='flex items-center gap-3 text-sm'><a href='/admin/' class='text-indigo-600 hover:underline'>Admin</a><button id='logoutBtn' class='px-3 py-1.5 rounded border bg-white hidden'>Log out</button></div>
+    </div>
+  </header>
+  <main class='flex-1'><div class='max-w-4xl mx-auto px-4 py-6'><div id='whoami' class='text-xs text-gray-500 mb-2'></div><section id='chat' class='space-y-4'></section></div></main>
+  <footer class='sticky bottom-0 bg-white border-t'><div class='max-w-4xl mx-auto px-4 py-3'>
+    <div class='rounded-2xl border bg-white shadow-sm p-2'>
+      <textarea id='input' rows='2' placeholder='Ask a quality question… (Shift+Enter = newline)' class='w-full resize-none outline-none p-2 rounded-xl'></textarea>
+      <div class='flex items-center justify-between px-1 pb-1'><small class='text-gray-500'>Powered by OpenAI</small><button id='send' class='px-3 py-1.5 rounded-xl btn-brand text-white disabled:opacity-50'>Send</button></div>
+    </div></div></footer>
+</div>
+<script>
+  const BACKEND_URL='/.netlify/functions/chat'; const SEARCH_URL='/.netlify/functions/search'; const LOG_URL='/.netlify/functions/usage-logger';
+  const chatEl=document.getElementById('chat'); const inputEl=document.getElementById('input'); const sendBtn=document.getElementById('send'); const logoutBtn=document.getElementById('logoutBtn'); const whoamiEl=document.getElementById('whoami');
+  function esc(s){const d=document.createElement('div');d.innerText=s;return d.innerHTML;} function add(role,text){const div=document.createElement('div');div.className='text-sm';div.innerHTML=role==='user'?'<div class="bg-indigo-600 text-white rounded-xl p-2">'+esc(text)+'</div>':'<div class="bg-white rounded-xl border p-2">'+esc(text)+'</div>'; chatEl.appendChild(div); window.scrollTo(0,document.body.scrollHeight);}
+  document.addEventListener('DOMContentLoaded',()=>{ if(window.netlifyIdentity){ window.netlifyIdentity.on('init',u=>{ if(!u) location.replace('/login.html'); else { whoamiEl.textContent='Signed in as '+(u.email||''); logoutBtn.classList.remove('hidden'); } }); window.netlifyIdentity.on('logout',()=> location.assign('/login.html')); window.netlifyIdentity.init(); } else { location.assign('/login.html'); } logoutBtn.addEventListener('click',()=> window.netlifyIdentity && window.netlifyIdentity.logout()); });
+  async function send(){ const q=inputEl.value.trim(); if(!q) return; add('user',q); inputEl.value=''; add('assistant','Thinking…'); try{ const sres=await fetch(SEARCH_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({q})}); const sj=sres.ok?await sres.json():{results:[]}; const ctx=(sj.results||[]).map(r=>'• '+r.title+': '+r.text).join('\n'); const res=await fetch(BACKEND_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'system',content:'You are Quality Chat.'},{role:'system',content:ctx||'No extra context'},{role:'user',content:q}]})}); const data=await res.json(); chatEl.lastElementChild.remove(); if(!res.ok||data.error){ add('assistant','Server error.'); return;} const a=data.answer||'No response.'; add('assistant',a); try{ fetch(LOG_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,answer:a})}); }catch(e){} }catch(e){ chatEl.lastElementChild.remove(); add('assistant','There was an error.'); } }
+  sendBtn.addEventListener('click',send); inputEl.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); }});
+</script>
+</body></html>
