@@ -1,36 +1,77 @@
-<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'/><meta name='viewport' content='width=device-width, initial-scale=1'/>
-<title>Admin · Quality Chat</title>
-  <link rel='preconnect' href='https://fonts.googleapis.com'>
-  <link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>
-  <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap' rel='stylesheet'>
-  <script src='https://cdn.tailwindcss.com'></script>
-  <script defer src='https://identity.netlify.com/v1/netlify-identity-widget.js'></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Admin · Quality Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <style>
-    :root { --brand:#4F46E5; --brand-600:#4F46E5; --brand-700:#4338CA; }
-    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
-    .btn-brand{background:var(--brand-600);color:#fff}
-    .btn-brand:hover{background:var(--brand-700)}
+    body { font-family: Inter, system-ui, sans-serif; }
+    .btn-admin {
+      display: block;
+      width: 100%;
+      text-align: center;
+      padding: 1rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 0.75rem;
+      border: 1px solid #e5e7eb;
+      background: white;
+      transition: box-shadow 0.2s;
+    }
+    .btn-admin:hover {
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
   </style>
 </head>
-<body class='bg-gray-50 text-gray-900'>
-<div class='max-w-5xl mx-auto p-6'>
-  <div class='flex items-center justify-between mb-6'>
-    <h1 class='text-2xl font-bold'>Admin</h1>
-    <div class='flex items-center gap-2'>
-      <a class='px-3 py-2 rounded border bg-white' href='/chat.html'>Back to Chat</a>
-      <button id='logoutBtn' class='px-3 py-2 rounded border bg-white hidden'>Log out</button>
+<body class="bg-gray-50 text-gray-900 min-h-screen flex items-center justify-center">
+  <div class="max-w-md w-full p-6 bg-white rounded-2xl shadow border">
+    <h1 class="text-2xl font-bold mb-6 text-center">Admin Dashboard</h1>
+    <div id="auth" class="text-sm text-gray-600 mb-6 text-center">Checking login…</div>
+    <div class="space-y-4">
+      <a href="/admin/kb.html" class="btn-admin">📚 Knowledge Base</a>
+      <a href="/admin/users.html" class="btn-admin">👥 User Management</a>
+      <a href="/admin/logs.html" class="btn-admin">📊 Usage Logs</a>
+    </div>
+    <div class="mt-6 text-center">
+      <a href="/chat.html" class="text-indigo-600 hover:underline text-sm">← Back to Chat</a>
+    </div>
+    <div class="mt-4 text-center">
+      <button id="logoutBtn" class="text-sm text-gray-500 hover:underline hidden">Log out</button>
     </div>
   </div>
-  <div id='auth' class='text-sm text-gray-600 mb-6'>Checking login…</div>
-  <div class='grid md:grid-cols-3 gap-4'>
-    <a href='/admin/kb.html' class='block bg-white border rounded-xl p-4 hover:shadow'><div class='font-semibold mb-1'>Knowledge Base</div><div class='text-sm text-gray-600'>Load/edit/download FAQs.</div></a>
-    <a href='/admin/users.html' class='block bg-white border rounded-xl p-4 hover:shadow'><div class='font-semibold mb-1'>Users</div><div class='text-sm text-gray-600'>Invite and send recovery links.</div></a>
-    <a href='/admin/logs.html' class='block bg-white border rounded-xl p-4 hover:shadow'><div class='font-semibold mb-1'>Usage Logs</div><div class='text-sm text-gray-600'>View, export JSON/CSV, clear (archive).</div></a>
-  </div>
-</div>
-<script>
-  const auth=document.getElementById('auth'); const logoutBtn=document.getElementById('logoutBtn');
-  function gate(user){ if(!user){ auth.textContent='Not signed in.'; location.replace('/login.html'); return; } const roles=(user.app_metadata&&user.app_metadata.roles)||[]; auth.textContent='Signed in as '+user.email+(roles.length?' (roles: '+roles.join(', ')+')':''); if(!roles.includes('admin')) auth.textContent+=' — admin role required.'; else logoutBtn.classList.remove('hidden'); }
-  document.addEventListener('DOMContentLoaded',()=>{ if(window.netlifyIdentity){ window.netlifyIdentity.on('init',gate); window.netlifyIdentity.on('logout',()=> location.assign('/login.html')); window.netlifyIdentity.init(); } else { location.assign('/login.html'); } logoutBtn.addEventListener('click',()=> window.netlifyIdentity && window.netlifyIdentity.logout()); });
-</script>
-</body></html>
+
+  <script>
+    const auth = document.getElementById('auth');
+    const logoutBtn = document.getElementById('logoutBtn');
+    function gate(user) {
+      if (!user) {
+        auth.textContent = "Not signed in.";
+        location.replace('/login.html');
+        return;
+      }
+      const roles = (user.app_metadata && user.app_metadata.roles) || [];
+      if (!roles.includes('admin')) {
+        auth.textContent = "Signed in as " + user.email + " — admin role required.";
+      } else {
+        auth.textContent = "Signed in as " + user.email + " (admin)";
+        logoutBtn.classList.remove('hidden');
+      }
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.netlifyIdentity) {
+        window.netlifyIdentity.on('init', gate);
+        window.netlifyIdentity.on('logout', () => location.assign('/login.html'));
+        window.netlifyIdentity.init();
+      } else {
+        location.assign('/login.html');
+      }
+      logoutBtn.addEventListener('click', () => window.netlifyIdentity && window.netlifyIdentity.logout());
+    });
+  </script>
+</body>
+</html>
