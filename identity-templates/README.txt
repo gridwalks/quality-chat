@@ -1,0 +1,1 @@
+Paste these templates into Netlify → Identity → Emails (Invitation, Confirmation, Recovery).
