@@ -1,5 +1,7 @@
+/access-denied    /access-denied.html    401
 /admin/*    /admin/:splat    200
 /*.html      /:splat          200
 /login.html  /login.html      200
 /chat.html   /chat.html       200
 /index.html  /index.html      200
+/*    /404.html    404

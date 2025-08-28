@@ -29,7 +29,7 @@
 <script>
   const auth=document.getElementById('auth'); const logsRefresh=document.getElementById('logsRefresh'); const logsJson=document.getElementById('logsJson'); const logsCsv=document.getElementById('logsCsv'); const logsClear=document.getElementById('logsClear'); const logsTable=document.getElementById('logsTable'); const LOG_URL='/.netlify/functions/usage-logger';
   function enable(b){ [logsRefresh,logsJson,logsCsv,logsClear].forEach(x=>x.disabled=!b); }
-  function gate(user){ if(!user) return location.replace('/login.html'); const roles=(user.app_metadata&&user.app_metadata.roles)||[]; if(!roles.includes('admin')){ auth.textContent='Admin role required.'; return; } auth.textContent='Signed in as '+user.email+' (admin)'; enable(true); }
+  function gate(user){ if(!user) return location.replace('/login.html'); const roles=(user.app_metadata&&user.app_metadata.roles)||[]; if(!roles.includes('admin')){ auth.textContent='Admin role required.'; location.replace('/access-denied.html'); return; } auth.textContent='Signed in as '+user.email+' (admin)'; enable(true); }
   document.addEventListener('DOMContentLoaded',()=>{ if(window.netlifyIdentity){ window.netlifyIdentity.on('init',gate); window.netlifyIdentity.init(); } else { location.replace('/login.html'); } });
   function snippet(s){ if(!s) return ''; const t=String(s).replace(/\s+/g,' ').trim(); return t.length>120? t.slice(0,117)+'…': t; }
   async function fetchLogs(){ const res=await fetch(LOG_URL,{method:'GET'}); if(!res.ok){ logsTable.innerHTML='<tr><td class="p-2 text-red-600" colspan="4">Failed to load logs</td></tr>'; return []; } const arr=await res.json(); return Array.isArray(arr)? arr: []; }
