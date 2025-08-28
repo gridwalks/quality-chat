@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="robots" content="noindex,nofollow"/>
+  <style>html.auth-checking body{visibility:hidden}</style>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Admin · AcceleraQA</title>
@@ -29,6 +31,25 @@
   </style>
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen flex items-center justify-center">
+
+  <script>
+  (function(){
+    try {
+      document.documentElement.classList.add('auth-checking');
+      var raw = localStorage.getItem('gotrue.user');
+      if(!raw){ window.location.replace('/login.html'); return; }
+      var u = JSON.parse(raw);
+      var roles = (u.app_metadata && u.app_metadata.roles) || [];
+      if(!Array.isArray(roles) || roles.indexOf('admin') === -1){
+        window.location.replace('/access-denied.html'); return;
+      }
+      document.documentElement.classList.remove('auth-checking');
+    } catch(e){
+      window.location.replace('/access-denied.html');
+    }
+  })();
+  </script>
+
   <div class="max-w-md w-full p-6 bg-white rounded-2xl shadow border">
     <h1 class="text-2xl font-bold mb-6 text-center">Admin Dashboard</h1>
     <div id="auth" class="text-sm text-gray-600 mb-6 text-center">Checking login…</div>
