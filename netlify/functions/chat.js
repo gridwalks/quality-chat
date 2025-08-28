@@ -5,19 +5,11 @@ const CORS = {
 };
 
 function extractAnswer(data) {
-  // Prefer Responses API `output_text`
-  if (typeof data?.output_text === "string" && data.output_text.trim()) {
-    return data.output_text.trim();
-  }
-  // Some SDKs/variants nest content arrays
+  if (typeof data?.output_text === "string" && data.output_text.trim()) return data.output_text.trim();
   const maybeText = data?.output?.[0]?.content?.[0]?.text;
   if (typeof maybeText === "string" && maybeText.trim()) return maybeText.trim();
-
-  // Fallback for Chat Completions style (if endpoint/model mismatched)
   const cc = data?.choices?.[0]?.message?.content;
   if (typeof cc === "string" && cc.trim()) return cc.trim();
-
-  // Nothing usable found
   return "";
 }
 
@@ -79,7 +71,7 @@ export default async (request) => {
 
     return new Response(JSON.stringify({
       answer: answer || "",
-      debug: answer ? undefined : { note: "Empty answer extracted", rawShape: Object.keys(data || {}) }
+      debug: answer ? undefined : { note: "Empty answer extracted", rawKeys: Object.keys(data || {}) }
     }), {
       headers: { "Content-Type": "application/json", ...CORS }
     });
