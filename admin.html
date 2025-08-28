@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quality Chat – Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}</style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <div class="max-w-5xl mx-auto p-6">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold">Admin</h1>
+      <div class="flex items-center gap-2">
+        <button id="loginBtn" class="px-3 py-2 rounded border bg-white hover:bg-gray-50">Log in</button>
+        <button id="logoutBtn" class="px-3 py-2 rounded border bg-white hover:bg-gray-50 hidden">Log out</button>
+        <a href="/chat.html" class="text-indigo-600 hover:underline">Back to Chat</a>
+      </div>
+    </div>
+
+    <div id="auth-status" class="text-sm text-gray-600 mb-6">Checking login…</div>
+
+    <div class="grid md:grid-cols-2 gap-8">
+      <!-- User Management -->
+      <section class="bg-white border rounded-xl p-4 shadow-sm">
+        <h2 class="text-lg font-semibold mb-2">User Management</h2>
+        <p class="text-sm text-gray-600 mb-3">Invite users via email. (Admins only)</p>
+        <div class="flex gap-2 mb-2">
+          <input id="inviteEmail" type="email" placeholder="email@company.com" class="flex-1 border rounded p-2">
+          <button id="inviteBtn" class="px-3 py-2 rounded bg-indigo-600 text-white disabled:opacity-50" disabled>Send invite</button>
+        </div>
+        <p id="inviteMsg" class="text-sm"></p>
+        <hr class="my-4">
+        <h3 class="font-medium mb-2">Password recovery</h3>
+        <div class="flex gap-2 mb-2">
+          <input id="recoverEmail" type="email" placeholder="email@company.com" class="flex-1 border rounded p-2">
+          <button id="recoverBtn" class="px-3 py-2 rounded bg-white border hover:bg-gray-50 disabled:opacity-50" disabled>Send recovery</button>
+        </div>
+        <p id="recoverMsg" class="text-sm"></p>
+      </section>
+
+      <!-- Knowledge Admin -->
+      <section class="bg-white border rounded-xl p-4 shadow-sm">
+        <h2 class="text-lg font-semibold mb-2">Knowledge Base</h2>
+        <div class="mb-3 flex gap-2">
+          <button id="load" class="px-3 py-2 rounded bg-white border hover:bg-gray-50" disabled>Load faqs.json</button>
+          <button id="add" class="px-3 py-2 rounded bg-white border hover:bg-gray-50" disabled>Add item</button>
+          <button id="download" class="px-3 py-2 rounded bg-indigo-600 text-white" disabled>Download faqs.json</button>
+        </div>
+        <div id="list" class="space-y-3"></div>
+      </section>
+    </div>
+
+    <!-- Usage Logs Section (Admin only) -->
+    <section class="bg-white border rounded-xl p-4 shadow-sm mt-8">
+      <h2 class="text-lg font-semibold mb-2">Usage Logs</h2>
+      <p class="text-sm text-gray-600 mb-3">Last 100 entries shown. Download full logs as JSON/CSV, or clear (archives with timestamp).</p>
+      <div class="flex flex-wrap gap-2 mb-3">
+        <button id="logsRefresh" class="px-3 py-2 rounded bg-white border hover:bg-gray-50" disabled>Refresh</button>
+        <button id="logsJson" class="px-3 py-2 rounded bg-white border hover:bg-gray-50" disabled>Download JSON</button>
+        <button id="logsCsv" class="px-3 py-2 rounded bg-white border hover:bg-gray-50" disabled>Download CSV</button>
+        <button id="logsClear" class="px-3 py-2 rounded bg-red-600 text-white disabled:opacity-50" disabled>Clear (Archive)</button>
+      </div>
+      <div class="overflow-auto max-h-96 border rounded">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-100 sticky top-0">
+            <tr><th class="text-left p-2">Time</th><th class="text-left p-2">User</th><th class="text-left p-2">Question</th><th class="text-left p-2">Answer (snippet)</th></tr>
+          </thead>
+          <tbody id="logsTable"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <template id="row">
+    <div class="bg-white border rounded-lg p-3 shadow-sm">
+      <div class="grid gap-2 sm:grid-cols-2">
+        <label class="text-sm">ID
+          <input class="w-full border rounded p-2 mt-1 id" placeholder="unique_id"/>
+        </label>
+        <label class="text-sm">Title
+          <input class="w-full border rounded p-2 mt-1 title" placeholder="Short title"/>
+        </label>
+      </div>
+      <label class="block text-sm mt-2">Text
+        <textarea rows="3" class="w-full border rounded p-2 mt-1 text" placeholder="Content shown to the model"></textarea>
+      </label>
+      <label class="block text-sm mt-2">Tags (comma-separated)
+        <input class="w-full border rounded p-2 mt-1 tags" placeholder="e.g., part 11, data integrity, validation"/>
+      </label>
+      <div class="mt-2 flex justify-end gap-2">
+        <button class="px-3 py-1.5 rounded border bg-white hover:bg-gray-50 dup">Duplicate</button>
+        <button class="px-3 py-1.5 rounded border bg-white hover:bg-gray-50 del">Delete</button>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    const authStatus = document.getElementById('auth-status');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const inviteEmail = document.getElementById('inviteEmail');
+    const inviteBtn = document.getElementById('inviteBtn');
+    const inviteMsg = document.getElementById('inviteMsg');
+    const recoverEmail = document.getElementById('recoverEmail');
+    const recoverBtn = document.getElementById('recoverBtn');
+    const recoverMsg = document.getElementById('recoverMsg');
+    const loadBtn = document.getElementById('load');
+    const addBtn = document.getElementById('add');
+    const dlBtn = document.getElementById('download');
+    const list = document.getElementById('list');
+    const tpl = document.getElementById('row');
+    const logsRefresh = document.getElementById('logsRefresh');
+    const logsJson = document.getElementById('logsJson');
+    const logsCsv = document.getElementById('logsCsv');
+    const logsClear = document.getElementById('logsClear');
+    const logsTable = document.getElementById('logsTable');
+
+    const IDENTITY_ADMIN_URL = "/.netlify/functions/identity-admin";
+    const LOG_URL = "/.netlify/functions/usage-logger";
+
+    function setEnabled(enabled) { [loadBtn, addBtn, dlBtn, inviteBtn, recoverBtn, logsRefresh, logsJson, logsCsv, logsClear].forEach(b => b.disabled = !enabled); }
+    function updateAuthUI(user) {
+      if (!user) { authStatus.textContent = "Not signed in."; loginBtn.classList.remove('hidden'); logoutBtn.classList.add('hidden'); setEnabled(false); return; }
+      loginBtn.classList.add('hidden'); logoutBtn.classList.remove('hidden');
+      const roles = (user.app_metadata && user.app_metadata.roles) || [];
+      authStatus.textContent = `Signed in as ${user.email} ${roles.length ? "(roles: " + roles.join(", ") + ")" : ""}`;
+      if (roles.includes('admin')) setEnabled(true); else { setEnabled(false); authStatus.textContent += " — You do not have the admin role."; }
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.netlifyIdentity) {
+        window.netlifyIdentity.on('init', updateAuthUI);
+        window.netlifyIdentity.on('login', (user) => { updateAuthUI(user); window.netlifyIdentity.close(); });
+        window.netlifyIdentity.on('logout', () => updateAuthUI(null));
+        window.netlifyIdentity.init();
+      } else { authStatus.textContent = "Netlify Identity not loaded."; }
+    });
+    loginBtn.addEventListener('click', () => window.netlifyIdentity && window.netlifyIdentity.open('login'));
+    logoutBtn.addEventListener('click', () => window.netlifyIdentity && window.netlifyIdentity.logout());
+
+    // Invite user
+    inviteBtn.addEventListener('click', async () => {
+      inviteMsg.textContent = "";
+      const email = inviteEmail.value.trim();
+      if (!email) { inviteMsg.textContent = "Enter an email."; inviteMsg.className = "text-sm text-red-600"; return; }
+      const res = await fetch(IDENTITY_ADMIN_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'invite', email }) });
+      const j = await res.json();
+      if (res.ok) { inviteMsg.textContent = "Invitation sent."; inviteMsg.className = "text-sm text-green-700"; inviteEmail.value = ""; }
+      else { inviteMsg.textContent = j.error || 'Failed to send invite.'; inviteMsg.className = "text-sm text-red-600"; }
+    });
+    // Recovery email
+    recoverBtn.addEventListener('click', async () => {
+      recoverMsg.textContent = "";
+      const email = recoverEmail.value.trim();
+      if (!email) { recoverMsg.textContent = "Enter an email."; recoverMsg.className = "text-sm text-red-600"; return; }
+      const res = await fetch(IDENTITY_ADMIN_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'recovery', email }) });
+      const j = await res.json();
+      if (res.ok) { recoverMsg.textContent = "Recovery email sent (if account exists)."; recoverMsg.className = "text-sm text-green-700"; recoverEmail.value = ""; }
+      else { recoverMsg.textContent = j.error || 'Failed to send recovery.'; recoverMsg.className = "text-sm text-red-600"; }
+    });
+
+    // Knowledge editor
+    let data = [];
+    function render() {
+      list.innerHTML = '';
+      data.forEach((item, idx) => {
+        const node = tpl.content.cloneNode(true);
+        node.querySelector('.id').value = item.id || '';
+        node.querySelector('.title').value = item.title || '';
+        node.querySelector('.text').value = item.text || '';
+        node.querySelector('.tags').value = (item.tags || []).join(', ');
+        node.querySelector('.id').addEventListener('input', (e) => data[idx].id = e.target.value);
+        node.querySelector('.title').addEventListener('input', (e) => data[idx].title = e.target.value);
+        node.querySelector('.text').addEventListener('input', (e) => data[idx].text = e.target.value);
+        node.querySelector('.tags').addEventListener('input', (e) => { data[idx].tags = e.target.value.split(',').map(s => s.trim()).filter(Boolean); });
+        node.querySelector('.dup').addEventListener('click', () => { data.splice(idx+1,0,{...data[idx], id:(data[idx].id||'')+'_copy'}); render(); });
+        node.querySelector('.del').addEventListener('click', () => { data.splice(idx,1); render(); });
+        list.appendChild(node);
+      });
+    }
+    document.getElementById('load').addEventListener('click', async () => {
+      const res = await fetch('/knowledge/faqs.json', { cache: 'no-store' });
+      data = await res.json();
+      data = data.map(d => ({ ...d, tags: Array.isArray(d.tags) ? d.tags : [] }));
+      render();
+    });
+    document.getElementById('add').addEventListener('click', () => { data.push({ id: '', title: '', text: '', tags: [] }); render(); });
+    document.getElementById('download').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'faqs.json'; a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Usage Logs
+    async function fetchLogs() {
+      const res = await fetch(LOG_URL, { method: 'GET' });
+      if (!res.ok) { logsTable.innerHTML = '<tr><td class="p-2 text-red-600" colspan="4">Failed to load logs</td></tr>'; return []; }
+      const arr = await res.json();
+      return Array.isArray(arr) ? arr : [];
+    }
+    function toSnippet(s) { if (!s) return ""; const t = String(s).replace(/\s+/g,' ').trim(); return t.length>120 ? t.slice(0,117)+'…' : t; }
+    function renderLogs(rows) {
+      logsTable.innerHTML = '';
+      if (!rows.length) { logsTable.innerHTML = '<tr><td class="p-2 text-gray-500" colspan="4">No entries.</td></tr>'; return; }
+      rows.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class="p-2 align-top">${r.time || ''}</td>
+                        <td class="p-2 align-top">${r.email || 'anonymous'}</td>
+                        <td class="p-2 align-top">${toSnippet(r.question)}</td>
+                        <td class="p-2 align-top">${toSnippet(r.answer)}</td>`;
+        logsTable.appendChild(tr);
+      });
+    }
+    async function refreshLogs() {
+      const all = await fetchLogs();
+      const last100 = all.slice(-100).reverse();
+      renderLogs(last100);
+    }
+    logsRefresh.addEventListener('click', refreshLogs);
+    logsJson.addEventListener('click', async () => {
+      const all = await fetchLogs();
+      const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'usage.json'; a.click(); URL.revokeObjectURL(url);
+    });
+    logsCsv.addEventListener('click', async () => {
+      const all = await fetchLogs();
+      const lines = ['time,email,question,answer'].concat(all.map(r => [r.time||'', r.email||'', r.question||'', r.answer||''].map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')));
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'usage.csv'; a.click(); URL.revokeObjectURL(url);
+    });
+    logsClear.addEventListener('click', async () => {
+      if (!confirm('Archive and clear all logs?')) return;
+      const res = await fetch(LOG_URL, { method: 'DELETE' });
+      if (res.ok) { alert('Logs archived and cleared.'); refreshLogs(); } else { alert('Failed to clear logs.'); }
+    });
+  </script>
+</body>
+</html>
