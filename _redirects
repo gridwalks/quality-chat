@@ -1,2 +1,5 @@
-/login.html   /login.html   200
-/*            /index.html   200
+/admin/*    /admin/:splat    200
+/*.html      /:splat          200
+/login.html  /login.html      200
+/chat.html   /chat.html       200
+/index.html  /index.html      200
