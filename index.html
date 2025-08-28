@@ -140,7 +140,7 @@ References: EU GMP Annex 11 (Validation), GAMP 5, ICH E6(R3).
           const sj = await sres.json();
           const results = sj.results || [];
           if (results.length) {
-            contextBlock = results.map(r => `• ${r.title}: ${r.text}`).join("\n");
+            contextBlock = results.map(r => `• ${r.title}: ${r.text}${r.tags && r.tags.length ? ' [tags: ' + r.tags.join(', ') + ']' : ''}`).join("\n");
           }
         }
 

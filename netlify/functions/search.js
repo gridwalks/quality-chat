@@ -1,5 +1,25 @@
 import { readFile } from 'node:fs/promises';
 
+function scoreItem(item, query) {
+  const q = String(query || "").toLowerCase();
+  let score = 0;
+
+  // Title overlap
+  item.title.toLowerCase().split(/[^a-z0-9]+/).forEach(w => { if (w && q.includes(w)) score += 2; });
+
+  // Text overlap (unique words)
+  const words = Array.from(new Set(item.text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)));
+  words.forEach(w => { if (q.includes(w)) score += 1; });
+
+  // Tag boost
+  (item.tags || []).forEach(tag => {
+    const t = String(tag).toLowerCase();
+    if (t && q.includes(t)) score += 3;
+  });
+
+  return score;
+}
+
 export default async (request) => {
   try {
     if (request.method === "OPTIONS") {
@@ -20,13 +40,9 @@ export default async (request) => {
     const fileUrl = new URL("../../knowledge/faqs.json", import.meta.url);
     const db = JSON.parse(await readFile(fileUrl, "utf8"));
 
-    const text = String(q || "").toLowerCase();
-    const scored = db.map(item => {
-      const words = item.text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
-      const unique = Array.from(new Set(words));
-      const score = unique.reduce((s, w) => s + (text.includes(w) ? 1 : 0), 0);
-      return { ...item, score };
-    }).sort((a,b)=>b.score-a.score).slice(0,3);
+    const scored = db.map(item => ({ ...item, score: scoreItem(item, q) }))
+                     .sort((a,b)=>b.score-a.score)
+                     .slice(0, 3);
 
     return new Response(JSON.stringify({ results: scored }), {
       headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }

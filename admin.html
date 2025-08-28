@@ -5,15 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Quality Chat – Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Simple client-side password (change value below or protect via Netlify _headers) -->
+  <meta name="admin-password" content="changeme">
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial; }
+  </style>
 </head>
 <body class="bg-gray-50 text-gray-900">
-  <div class="max-w-4xl mx-auto p-6">
+  <div id="lock" class="fixed inset-0 bg-gray-100 flex items-center justify-center">
+    <div class="bg-white border rounded-xl p-6 shadow max-w-sm w-full">
+      <h2 class="text-lg font-semibold mb-2">Admin Access</h2>
+      <p class="text-sm text-gray-600 mb-4">Enter the admin password to continue.</p>
+      <input id="pw" type="password" class="w-full border rounded p-2 mb-3" placeholder="Password">
+      <button id="enter" class="w-full px-3 py-2 rounded bg-indigo-600 text-white">Enter</button>
+      <p id="msg" class="text-sm text-red-600 mt-2 hidden">Incorrect password</p>
+    </div>
+  </div>
+
+  <div class="max-w-4xl mx-auto p-6 hidden" id="app">
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold">Knowledge Admin</h1>
       <a href="/index.html" class="text-indigo-600 hover:underline">Back to Chat</a>
     </div>
 
-    <p class="text-gray-600 mb-4">Load, edit, and download your <code>faqs.json</code>. After downloading, upload it to <strong>site/knowledge/faqs.json</strong> on Netlify (redeploy by drag-and-drop) to make changes live.</p>
+    <p class="text-gray-600 mb-4">Load, tag, edit, and download your <code>faqs.json</code>. After downloading, upload it to <strong>site/knowledge/faqs.json</strong> on Netlify (redeploy) to make changes live.</p>
 
     <div class="mb-4 flex gap-2">
       <button id="load" class="px-3 py-2 rounded bg-white border hover:bg-gray-50">Load current faqs.json</button>
@@ -37,6 +52,9 @@
       <label class="block text-sm mt-2">Text
         <textarea rows="3" class="w-full border rounded p-2 mt-1 text" placeholder="Content shown to the model"></textarea>
       </label>
+      <label class="block text-sm mt-2">Tags (comma-separated)
+        <input class="w-full border rounded p-2 mt-1 tags" placeholder="e.g., part 11, data integrity, validation"/>
+      </label>
       <div class="mt-2 flex justify-end gap-2">
         <button class="px-3 py-1.5 rounded border bg-white hover:bg-gray-50 dup">Duplicate</button>
         <button class="px-3 py-1.5 rounded border bg-white hover:bg-gray-50 del">Delete</button>
@@ -45,6 +63,30 @@
   </template>
 
   <script>
+    // --- Password Gate (client-side convenience; for real protection, use Netlify Basic Auth in _headers) ---
+    const lock = document.getElementById('lock');
+    const app = document.getElementById('app');
+    const pwInput = document.getElementById('pw');
+    const enterBtn = document.getElementById('enter');
+    const msg = document.getElementById('msg');
+    const PASS = (document.querySelector('meta[name="admin-password"]')?.content || 'changeme');
+
+    function unlock() {
+      lock.classList.add('hidden');
+      app.classList.remove('hidden');
+    }
+    enterBtn.addEventListener('click', () => {
+      if (pwInput.value === PASS) {
+        unlock();
+        localStorage.setItem('qc_admin_ok', '1');
+      } else {
+        msg.classList.remove('hidden');
+      }
+    });
+    // auto-unlock if previously set (convenience)
+    if (localStorage.getItem('qc_admin_ok') === '1') unlock();
+
+    // --- Admin App ---
     const list = document.getElementById('list');
     const loadBtn = document.getElementById('load');
     const addBtn = document.getElementById('add');
@@ -60,10 +102,14 @@
         node.querySelector('.id').value = item.id || '';
         node.querySelector('.title').value = item.title || '';
         node.querySelector('.text').value = item.text || '';
+        node.querySelector('.tags').value = (item.tags || []).join(', ');
 
         node.querySelector('.id').addEventListener('input', (e) => data[idx].id = e.target.value);
         node.querySelector('.title').addEventListener('input', (e) => data[idx].title = e.target.value);
         node.querySelector('.text').addEventListener('input', (e) => data[idx].text = e.target.value);
+        node.querySelector('.tags').addEventListener('input', (e) => {
+          data[idx].tags = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+        });
 
         node.querySelector('.dup').addEventListener('click', () => {
           data.splice(idx+1, 0, { ...data[idx], id: (data[idx].id || '') + '_copy' });
@@ -81,11 +127,13 @@
     loadBtn.addEventListener('click', async () => {
       const res = await fetch('/knowledge/faqs.json', { cache: 'no-store' });
       data = await res.json();
+      // ensure tags property exists
+      data = data.map(d => ({ ...d, tags: Array.isArray(d.tags) ? d.tags : [] }));
       render();
     });
 
     addBtn.addEventListener('click', () => {
-      data.push({ id: '', title: '', text: '' });
+      data.push({ id: '', title: '', text: '', tags: [] });
       render();
     });
 
@@ -98,9 +146,6 @@
       a.click();
       URL.revokeObjectURL(url);
     });
-
-    // Auto-load on open
-    loadBtn.click();
   </script>
 </body>
 </html>
