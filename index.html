@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Optional: if front end and backend are on different hosts, set your backend URL here -->
+  <script defer src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <!-- <meta name="quality-chat-backend" content="https://YOUR-BACKEND/chat"> -->
   <style>
     body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial; }
@@ -28,7 +28,9 @@
             <p class="text-xs text-gray-500 -mt-0.5">Ask anything about Quality & Compliance</p>
           </div>
         </div>
-        <div class="flex items-center gap-4 text-sm">
+        <div class="flex items-center gap-3 text-sm">
+          <a href="/login.html" class="px-3 py-1.5 rounded border bg-white hover:bg-gray-50">Sign in</a>
+          <button id="logoutBtn" class="px-3 py-1.5 rounded border bg-white hover:bg-gray-50 hidden">Log out</button>
           <a href="/admin.html" class="text-indigo-600 hover:underline">Admin</a>
           <a href="#" id="clearBtn" class="text-gray-500 hover:text-gray-700">Clear chat</a>
         </div>
@@ -37,6 +39,7 @@
 
     <main class="flex-1">
       <div class="max-w-4xl mx-auto px-4 py-6">
+        <div id="whoami" class="text-xs text-gray-500 mb-2"></div>
         <section id="suggestions" class="grid gap-2 grid-cols-1 sm:grid-cols-2 mb-4">
           <button class="px-3 py-2 rounded-xl border bg-white text-left hover:bg-gray-50" data-suggest>
             How do 21 CFR Part 11 and EU Annex 11 differ?
@@ -70,7 +73,6 @@
   </div>
 
   <script>
-    // Auto-detect backend URL (Netlify by default)
     const META = document.querySelector('meta[name="quality-chat-backend"]');
     const BACKEND_URL = (META && META.content) || "/.netlify/functions/chat";
     const SEARCH_URL = "/.netlify/functions/search";
@@ -79,22 +81,10 @@
     const inputEl = document.getElementById('input');
     const sendBtn = document.getElementById('send');
     const clearBtn = document.getElementById('clearBtn');
+    const whoamiEl = document.getElementById('whoami');
+    const logoutBtn = document.getElementById('logoutBtn');
 
-    const sysPrompt = `You are Quality Chat, a helpful assistant for quality & compliance questions in life sciences. Be concise, cite authoritative standards by name (e.g., 21 CFR Part 11, EU GMP Annex 11, ICH E6(R3)) when relevant, and give actionable steps, examples, and cautions. If a question requires legal or regulatory interpretation, include a gentle disclaimer and refer users to the official text.
-
-Few-shot examples (style & structure):
-USER: Give a CAPA root cause statement for repeated data entry errors.
-ASSISTANT:
-Summary: Repeated data entry errors originate from inadequate user training on the eCRF, lack of double-data verification, and poorly configured field validations.
-Actions: 1) Implement mandatory refresher training; 2) Enable field-level validation and required fields; 3) Add peer verification for critical fields; 4) Trend errors monthly.
-References: 21 CFR Part 11 §11.10(k); ICH E6(R3) – Quality by Design, Data Integrity.
-
-USER: Outline risk-based validation for an eClinical system upgrade.
-ASSISTANT:
-Summary: Apply a proportionate validation approach focused on high-risk functions (randomization, dosing, endpoint capture) and data integrity controls.
-Actions: Develop/update URS; perform risk assessment; tailor test depth for GxP-impacting functions; qualify infrastructure; document traceability; run PQ in a representative environment.
-References: EU GMP Annex 11 (Validation), GAMP 5, ICH E6(R3).
-`;
+    const sysPrompt = `You are Quality Chat, a helpful assistant for quality & compliance questions in life sciences. Be concise, cite authoritative standards by name (e.g., 21 CFR Part 11, EU GMP Annex 11, ICH E6(R3)) when relevant, and give actionable steps, examples, and cautions. If a question requires legal or regulatory interpretation, include a gentle disclaimer and refer users to the official text.`;
 
     let history = [
       { role: 'system', content: sysPrompt },
@@ -106,7 +96,6 @@ References: EU GMP Annex 11 (Validation), GAMP 5, ICH E6(R3).
       div.innerText = text;
       return div.innerHTML;
     }
-
     function appendMessage(role, text) {
       const bubble = document.createElement('div');
       bubble.className = `fade-in flex gap-3 ${role==='user' ? 'justify-end' : ''}`;
@@ -119,6 +108,27 @@ References: EU GMP Annex 11 (Validation), GAMP 5, ICH E6(R3).
       chatEl.scrollTop = chatEl.scrollHeight;
     }
 
+    function updateWhoAmI(user) {
+      if (user) {
+        const roles = (user.app_metadata && user.app_metadata.roles) || [];
+        whoamiEl.textContent = `Signed in as ${user.email} ${roles.length ? "(roles: " + roles.join(", ") + ")" : ""}`;
+        logoutBtn.classList.remove('hidden');
+      } else {
+        whoamiEl.textContent = '';
+        logoutBtn.classList.add('hidden');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.netlifyIdentity) {
+        window.netlifyIdentity.on('init', user => updateWhoAmI(user));
+        window.netlifyIdentity.on('login', user => { updateWhoAmI(user); window.location.reload(); });
+        window.netlifyIdentity.on('logout', () => { updateWhoAmI(null); window.location.reload(); });
+        window.netlifyIdentity.init();
+      }
+      logoutBtn.addEventListener('click', () => window.netlifyIdentity && window.netlifyIdentity.logout());
+    });
+
     async function send() {
       const content = inputEl.value.trim();
       if (!content) return;
@@ -129,12 +139,7 @@ References: EU GMP Annex 11 (Validation), GAMP 5, ICH E6(R3).
       appendMessage('assistant', 'Thinking…');
 
       try {
-        // 1) Retrieve context snippets via RAG function
-        const sres = await fetch(SEARCH_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ q: content })
-        });
+        const sres = await fetch(SEARCH_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q: content }) });
         let contextBlock = '';
         if (sres.ok) {
           const sj = await sres.json();
@@ -144,39 +149,25 @@ References: EU GMP Annex 11 (Validation), GAMP 5, ICH E6(R3).
           }
         }
 
-        // 2) Ask the chat function
-        const res = await fetch(BACKEND_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages: [
-              { role: 'system', content: sysPrompt },
-              { role: 'system', content: contextBlock ? `Context (use for citations):\n${contextBlock}` : 'No extra context' },
-              { role: 'user', content }
-            ]
-          })
-        });
+        const res = await fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: [
+          { role: 'system', content: sysPrompt },
+          { role: 'system', content: contextBlock ? `Context (use for citations):\n${contextBlock}` : 'No extra context' },
+          { role: 'user', content }
+        ] }) });
 
         const data = await res.json();
-        // Replace "Thinking…"
         chatEl.lastElementChild.remove();
 
         if (!res.ok || data.error) {
-          // Friendly messaging for common OpenAI errors
-          if (data.detail && typeof data.detail === 'string' && data.detail.includes('insufficient_quota')) {
-            appendMessage('assistant', 'Out of credits on the OpenAI API key. Please check billing on platform.openai.com.');
-          } else {
-            appendMessage('assistant', `Server error: ${data.error || res.status}\n${data.detail ? `Details: ${data.detail}` : ''}`);
-          }
+          appendMessage('assistant', `Server error: ${data.error || res.status}\n${data.detail ? `Details: ${data.detail}` : ''}`);
           return;
         }
-
         if (data.answer && data.answer.trim()) {
           appendMessage('assistant', data.answer);
           history.push({ role: 'user', content });
           history.push({ role: 'assistant', content: data.answer });
         } else {
-          appendMessage('assistant', `No response from model.${data.debug ? `\nDebug: ${JSON.stringify(data.debug)}` : ''}`);
+          appendMessage('assistant', `No response from model.`);
         }
       } catch (err) {
         chatEl.lastElementChild.remove();
@@ -187,24 +178,11 @@ References: EU GMP Annex 11 (Validation), GAMP 5, ICH E6(R3).
     }
 
     sendBtn.addEventListener('click', send);
-    inputEl.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        send();
-      }
-    });
-
-    clearBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      chatEl.innerHTML = '';
-      history = [ { role: 'system', content: sysPrompt } ];
-      appendMessage('assistant', 'Chat cleared. How can I help?');
-    });
+    inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+    document.getElementById('clearBtn').addEventListener('click', (e) => { e.preventDefault(); chatEl.innerHTML=''; appendMessage('assistant','Chat cleared. How can I help?'); });
 
     appendMessage('assistant', history[1].content);
-    document.querySelectorAll('[data-suggest]').forEach(btn => {
-      btn.addEventListener('click', () => { inputEl.value = btn.textContent.trim(); inputEl.focus(); });
-    });
+    document.querySelectorAll('[data-suggest]').forEach(btn => btn.addEventListener('click', () => { inputEl.value = btn.textContent.trim(); inputEl.focus(); }));
   </script>
 </body>
 </html>

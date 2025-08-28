@@ -5,43 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Quality Chat – Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <meta name="admin-password" content="changeme">
+  <script defer src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}</style>
 </head>
 <body class="bg-gray-50 text-gray-900">
-  <div id="lock" class="fixed inset-0 bg-gray-100 flex items-center justify-center">
-    <div class="bg-white border rounded-xl p-6 shadow max-w-sm w-full">
-      <h2 class="text-lg font-semibold mb-2">Admin Access</h2>
-      <p class="text-sm text-gray-600 mb-4">Enter the admin password to continue.</p>
-      <input id="pw" type="password" class="w-full border rounded p-2 mb-3" placeholder="Password">
-      <button id="enter" class="w-full px-3 py-2 rounded bg-indigo-600 text-white">Enter</button>
-      <p id="msg" class="text-sm text-red-600 mt-2 hidden">Incorrect password</p>
-    </div>
-  </div>
-
-  <div class="max-w-5xl mx-auto p-6 hidden" id="app">
+  <div class="max-w-4xl mx-auto p-6">
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold">Knowledge Admin</h1>
-      <a href="/index.html" class="text-indigo-600 hover:underline">Back to Chat</a>
+      <div class="flex items-center gap-2">
+        <button id="loginBtn" class="px-3 py-2 rounded border bg-white hover:bg-gray-50">Log in</button>
+        <button id="logoutBtn" class="px-3 py-2 rounded border bg-white hover:bg-gray-50 hidden">Log out</button>
+        <a href="/index.html" class="text-indigo-600 hover:underline">Back to Chat</a>
+      </div>
     </div>
 
-    <div class="bg-white border rounded-xl p-4 shadow-sm mb-4">
-      <div class="grid sm:grid-cols-2 gap-3">
-        <div>
-          <label class="text-sm block mb-1">Filter (title, text, tags)</label>
-          <input id="filter" class="w-full border rounded p-2" placeholder="e.g., Part 11, validation, ALCOA" />
-        </div>
-        <div class="flex items-end gap-2">
-          <button id="load" class="px-3 py-2 rounded bg-white border hover:bg-gray-50">Load faqs.json</button>
-          <button id="add" class="px-3 py-2 rounded bg-white border hover:bg-gray-50">Add item</button>
-          <button id="download" class="px-3 py-2 rounded bg-indigo-600 text-white">Download JSON</button>
-          <button id="exportCsv" class="px-3 py-2 rounded bg-white border hover:bg-gray-50">Export CSV</button>
-          <label class="px-3 py-2 rounded bg-white border hover:bg-gray-50 cursor-pointer">
-            Import CSV
-            <input type="file" id="importCsv" accept=".csv" class="hidden">
-          </label>
-        </div>
-      </div>
-      <p class="text-xs text-gray-500 mt-2">CSV columns: <code>id,title,text,tags</code> — tags separated by semicolons.</p>
+    <div id="auth-status" class="text-sm text-gray-600 mb-4">Checking login…</div>
+
+    <p class="text-gray-600 mb-4">Only users with the <strong>admin</strong> role may edit the knowledge base. Use Netlify → Identity to invite/remove users and assign roles.</p>
+
+    <div class="mb-4 flex gap-2">
+      <button id="load" class="px-3 py-2 rounded bg-white border hover:bg-gray-50" disabled>Load current faqs.json</button>
+      <button id="add" class="px-3 py-2 rounded bg-white border hover:bg-gray-50" disabled>Add item</button>
+      <button id="download" class="px-3 py-2 rounded bg-indigo-600 text-white" disabled>Download faqs.json</button>
     </div>
 
     <div id="list" class="space-y-3"></div>
@@ -71,59 +56,52 @@
   </template>
 
   <script>
-    // Password gate
-    const lock = document.getElementById('lock');
-    const app = document.getElementById('app');
-    const pwInput = document.getElementById('pw');
-    const enterBtn = document.getElementById('enter');
-    const msg = document.getElementById('msg');
-    const PASS = (document.querySelector('meta[name="admin-password"]')?.content || 'changeme');
-    function unlock(){ lock.classList.add('hidden'); app.classList.remove('hidden'); }
-    enterBtn.addEventListener('click', () => { if (pwInput.value === PASS) { unlock(); localStorage.setItem('qc_admin_ok','1'); } else { msg.classList.remove('hidden'); } });
-    if (localStorage.getItem('qc_admin_ok') === '1') unlock();
-
-    // Admin logic
-    const list = document.getElementById('list');
+    const authStatus = document.getElementById('auth-status');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
     const loadBtn = document.getElementById('load');
     const addBtn = document.getElementById('add');
     const dlBtn = document.getElementById('download');
-    const exportCsvBtn = document.getElementById('exportCsv');
-    const importCsvInput = document.getElementById('importCsv');
-    const filterInput = document.getElementById('filter');
-    const tpl = document.getElementById('row');
 
-    let data = [];
-    let filter = '';
-
-    function matchesFilter(item) {
-      if (!filter) return true;
-      const f = filter.toLowerCase();
-      return (item.id||'').toLowerCase().includes(f)
-          || (item.title||'').toLowerCase().includes(f)
-          || (item.text||'').toLowerCase().includes(f)
-          || (Array.isArray(item.tags) ? item.tags.join(' ').toLowerCase() : '').includes(f);
+    function setEnabled(enabled) { [loadBtn, addBtn, dlBtn].forEach(b => b.disabled = !enabled); }
+    function updateAuthUI(user) {
+      if (!user) { authStatus.textContent = "Not signed in."; loginBtn.classList.remove('hidden'); logoutBtn.classList.add('hidden'); setEnabled(false); return; }
+      loginBtn.classList.add('hidden'); logoutBtn.classList.remove('hidden');
+      const roles = (user.app_metadata && user.app_metadata.roles) || [];
+      authStatus.textContent = `Signed in as ${user.email} ${roles.length ? "(roles: " + roles.join(", ") + ")" : ""}`;
+      if (roles.includes('admin')) setEnabled(true); else { setEnabled(false); authStatus.textContent += " — You do not have the admin role."; }
     }
 
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.netlifyIdentity) {
+        window.netlifyIdentity.on('init', updateAuthUI);
+        window.netlifyIdentity.on('login', (user) => { updateAuthUI(user); window.netlifyIdentity.close(); });
+        window.netlifyIdentity.on('logout', () => updateAuthUI(null));
+        window.netlifyIdentity.init();
+      } else { authStatus.textContent = "Netlify Identity not loaded."; }
+    });
+
+    loginBtn.addEventListener('click', () => window.netlifyIdentity && window.netlifyIdentity.open('login'));
+    logoutBtn.addEventListener('click', () => window.netlifyIdentity && window.netlifyIdentity.logout());
+
+    // Editor
+    const list = document.getElementById('list');
+    const tpl = document.getElementById('row');
+    let data = [];
     function render() {
       list.innerHTML = '';
       data.forEach((item, idx) => {
-        if (!matchesFilter(item)) return;
         const node = tpl.content.cloneNode(true);
         node.querySelector('.id').value = item.id || '';
         node.querySelector('.title').value = item.title || '';
         node.querySelector('.text').value = item.text || '';
         node.querySelector('.tags').value = (item.tags || []).join(', ');
-
         node.querySelector('.id').addEventListener('input', (e) => data[idx].id = e.target.value);
         node.querySelector('.title').addEventListener('input', (e) => data[idx].title = e.target.value);
         node.querySelector('.text').addEventListener('input', (e) => data[idx].text = e.target.value);
-        node.querySelector('.tags').addEventListener('input', (e) => {
-          data[idx].tags = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
-        });
-
-        node.querySelector('.dup').addEventListener('click', () => { data.splice(idx+1, 0, { ...data[idx], id: (data[idx].id || '') + '_copy' }); render(); });
-        node.querySelector('.del').addEventListener('click', () => { data.splice(idx, 1); render(); });
-
+        node.querySelector('.tags').addEventListener('input', (e) => { data[idx].tags = e.target.value.split(',').map(s => s.trim()).filter(Boolean); });
+        node.querySelector('.dup').addEventListener('click', () => { data.splice(idx+1,0,{...data[idx], id:(data[idx].id||'')+'_copy'}); render(); });
+        node.querySelector('.del').addEventListener('click', () => { data.splice(idx,1); render(); });
         list.appendChild(node);
       });
     }
@@ -134,70 +112,13 @@
       data = data.map(d => ({ ...d, tags: Array.isArray(d.tags) ? d.tags : [] }));
       render();
     });
-
     addBtn.addEventListener('click', () => { data.push({ id: '', title: '', text: '', tags: [] }); render(); });
     dlBtn.addEventListener('click', () => {
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'faqs.json'; a.click(); URL.revokeObjectURL(url);
+      const a = document.createElement('a'); a.href = url; a.download = 'faqs.json'; a.click();
+      URL.revokeObjectURL(url);
     });
-
-    exportCsvBtn.addEventListener('click', () => {
-      const header = ['id','title','text','tags'];
-      const lines = [header.join(',')];
-      data.forEach(item => {
-        const tags = (item.tags || []).join(';');
-        const row = [item.id||'', item.title||'', item.text||'', tags].map(v => `"${String(v).replace(/"/g,'""')}"`);
-        lines.push(row.join(','));
-      });
-      const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = 'faqs.csv'; a.click(); URL.revokeObjectURL(url);
-    });
-
-    importCsvInput.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const text = await file.text();
-      const rows = text.split(/\r?\n/).filter(Boolean);
-      if (rows.length < 2) return alert('CSV appears empty');
-      const header = rows[0].split(',').map(h => h.trim().toLowerCase());
-      const idxId = header.indexOf('id'), idxTitle = header.indexOf('title'), idxText = header.indexOf('text'), idxTags = header.indexOf('tags');
-      if (idxId === -1 || idxTitle === -1 || idxText === -1 || idxTags === -1) {
-        return alert('CSV must have columns: id,title,text,tags');
-      }
-      for (let i = 1; i < rows.length; i++) {
-        const line = rows[i];
-        const cells = [];
-        let cur = '', inQ = false;
-        for (let j = 0; j < line.length; j++) {
-          const c = line[j];
-          if (c === '"' ) {
-            if (inQ && line[j+1] === '"') { cur += '"'; j++; }
-            else { inQ = !inQ; }
-          } else if (c === ',' && !inQ) {
-            cells.push(cur); cur = '';
-          } else {
-            cur += c;
-          }
-        }
-        cells.push(cur);
-        const obj = {
-          id: cells[idxId]?.trim() || '',
-          title: cells[idxTitle]?.trim() || '',
-          text: cells[idxText]?.trim() || '',
-          tags: (cells[idxTags]||'').split(';').map(s => s.trim()).filter(Boolean)
-        };
-        if (!obj.id && !obj.title && !obj.text) continue;
-        data.push(obj);
-      }
-      render();
-      importCsvInput.value = '';
-      alert('CSV imported. Review and click "Download JSON" to save.');
-    });
-
-    filterInput.addEventListener('input', (e) => { filter = e.target.value; render(); });
   </script>
 </body>
 </html>
