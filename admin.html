@@ -15,7 +15,7 @@
       <div class="flex items-center gap-2">
         <button id="loginBtn" class="px-3 py-2 rounded border bg-white hover:bg-gray-50">Log in</button>
         <button id="logoutBtn" class="px-3 py-2 rounded border bg-white hover:bg-gray-50 hidden">Log out</button>
-        <a href="/index.html" class="text-indigo-600 hover:underline">Back to Chat</a>
+        <a href="/chat.html" class="text-indigo-600 hover:underline">Back to Chat</a>
       </div>
     </div>
 
@@ -100,20 +100,17 @@
     const authStatus = document.getElementById('auth-status');
     const loginBtn = document.getElementById('loginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
-
     const inviteEmail = document.getElementById('inviteEmail');
     const inviteBtn = document.getElementById('inviteBtn');
     const inviteMsg = document.getElementById('inviteMsg');
     const recoverEmail = document.getElementById('recoverEmail');
     const recoverBtn = document.getElementById('recoverBtn');
     const recoverMsg = document.getElementById('recoverMsg');
-
     const loadBtn = document.getElementById('load');
     const addBtn = document.getElementById('add');
     const dlBtn = document.getElementById('download');
     const list = document.getElementById('list');
     const tpl = document.getElementById('row');
-
     const logsRefresh = document.getElementById('logsRefresh');
     const logsJson = document.getElementById('logsJson');
     const logsCsv = document.getElementById('logsCsv');
@@ -124,7 +121,6 @@
     const LOG_URL = "/.netlify/functions/usage-logger";
 
     function setEnabled(enabled) { [loadBtn, addBtn, dlBtn, inviteBtn, recoverBtn, logsRefresh, logsJson, logsCsv, logsClear].forEach(b => b.disabled = !enabled); }
-
     function updateAuthUI(user) {
       if (!user) { authStatus.textContent = "Not signed in."; loginBtn.classList.remove('hidden'); logoutBtn.classList.add('hidden'); setEnabled(false); return; }
       loginBtn.classList.add('hidden'); logoutBtn.classList.remove('hidden');
@@ -219,11 +215,10 @@
     }
     async function refreshLogs() {
       const all = await fetchLogs();
-      const last100 = all.slice(-100).reverse(); // newest first
+      const last100 = all.slice(-100).reverse();
       renderLogs(last100);
     }
     logsRefresh.addEventListener('click', refreshLogs);
-
     logsJson.addEventListener('click', async () => {
       const all = await fetchLogs();
       const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
@@ -231,9 +226,7 @@
     });
     logsCsv.addEventListener('click', async () => {
       const all = await fetchLogs();
-      const header = ['time','email','question','answer'];
-      const esc = v => ('"'+String(v or '').replace(/"/g,'""')+'"');
-      const lines = [header.join(',')].concat(all.map(r => [r.time||'', r.email||'', r.question||'', r.answer||''].map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')));
+      const lines = ['time,email,question,answer'].concat(all.map(r => [r.time||'', r.email||'', r.question||'', r.answer||''].map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')));
       const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
       const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'usage.csv'; a.click(); URL.revokeObjectURL(url);
     });

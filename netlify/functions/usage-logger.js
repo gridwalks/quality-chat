@@ -38,7 +38,7 @@ export default async (req, context) => {
       await ensureFile(LOG);
       const ts = new Date().toISOString().replace(/[:]/g, '-');
       const archive = ARCHIVE_PREFIX + ts + '.log';
-      try { await rename(LOG, archive); } catch { /* ignore */ }
+      try { await rename(LOG, archive); } catch {}
       await writeFile(LOG, '');
       return new Response(JSON.stringify({ ok: true, archive }), { headers: { 'Content-Type': 'application/json', ...CORS } });
     }

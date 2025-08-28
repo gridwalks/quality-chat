@@ -19,7 +19,7 @@
   </div>
   <script>
     document.getElementById('open').addEventListener('click', () => { if (window.netlifyIdentity) window.netlifyIdentity.open('login'); else alert('Identity widget not loaded.'); });
-    document.addEventListener('DOMContentLoaded', () => { if (window.netlifyIdentity) { window.netlifyIdentity.on('login', () => window.location.assign('/')); window.netlifyIdentity.init(); } });
+    document.addEventListener('DOMContentLoaded', () => { if (window.netlifyIdentity) { window.netlifyIdentity.on('login', () => window.location.assign('/chat.html')); window.netlifyIdentity.init(); } });
   </script>
 </body>
 </html>
