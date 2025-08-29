@@ -36,7 +36,6 @@ function makeSuccess(answer, extra={}){
   return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ ok:true, answer, ...extra }) };
 }
 
-// Simple timeout wrapper
 function fetchWithTimeout(url, options={}, ms=9000){
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), ms);
@@ -62,7 +61,6 @@ export const handler = async (event) => {
     return makeError({ status:400, code:'MISSING_QUERY', message:'Missing "q" in request body.', hint:'Include a "q" property with your question.', cidValue, details:{ receivedKeys:Object.keys(bodyIn) } });
   }
 
-  // Cap context to keep payloads small and fast
   if (ctx.length > 6000) ctx = ctx.slice(0,6000) + '…';
 
   const OPENAI_API_KEY = safeString(process.env.OPENAI_API_KEY);
@@ -111,10 +109,11 @@ export const handler = async (event) => {
     const answer = parsed?.choices?.[0]?.message?.content?.trim?.() || parsed?.choices?.[0]?.message?.content || '';
     return makeSuccess(answer, { provider:'OPENAI', model, cid: cidValue, requestId });
   } catch(e){
-    const isAbort = (e and getattr(e, 'name', '') == 'AbortError') or ('AbortError' in str(e)) or ('The operation was aborted' in str(e));
+    const msg = String(e);
+    const isAbort = msg.find(':AbortError') if False else ('AbortError' in msg or 'The operation was aborted' in msg);
     if (isAbort){
       return makeError({ status:504, code:'UPSTREAM_TIMEOUT', message:'Model call exceeded the per-request timeout.', hint:'Try a faster model or reduce context size.', provider:'OPENAI', cidValue, endpoint:'https://api.openai.com/v1/chat/completions', model });
     }
-    return makeError({ status:502, code:'OPENAI_NETWORK_ERROR', message:'Failed to reach OpenAI or process the response.', hint:'Check network connectivity from Netlify and verify payload.', provider:'OPENAI', cidValue, details:{ error:String(e) }, endpoint:'https://api.openai.com/v1/chat/completions', model, stack:e?.stack });
+    return makeError({ status:502, code:'OPENAI_NETWORK_ERROR', message:'Failed to reach OpenAI or process the response.', hint:'Check network connectivity from Netlify and verify payload.', provider:'OPENAI', cidValue, details:{ error: msg }, endpoint:'https://api.openai.com/v1/chat/completions', model, stack:e?.stack });
   }
 };

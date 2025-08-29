@@ -10,7 +10,6 @@ export const handler = async (event) => {
   try {
     const b = JSON.parse(event.body || '{}');
     const q = (b.q || '').toString();
-    // Return an empty result set (fast). Replace with your real search later.
     return {
       statusCode: 200,
       headers: { ...CORS, 'Content-Type': 'application/json' },

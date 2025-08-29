@@ -16,8 +16,7 @@
   });
   document.addEventListener('DOMContentLoaded',()=>{
     if(window.netlifyIdentity){
-      window.netlifyIdentity.on('login', user => { location.assign('/'); });
-      window.netlifyIdentity.on('init', user => { if(user) location.assign('/'); });
+      window.netlifyIdentity.on('login', user => { /* stay on page; index listens to identity events */ });
       window.netlifyIdentity.init();
     }
   });

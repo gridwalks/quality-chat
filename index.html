@@ -17,19 +17,39 @@
   <header class='bg-white border-b sticky top-0 z-10'>
     <div class='max-w-4xl mx-auto px-4 py-4 flex items-center justify-between'>
       <div class='flex items-center gap-3'><a href='/index.html'><img src='/assets/logo.svg' class='h-9 w-9 rounded-2xl shadow' alt=''/></a><div><h1 class='text-lg font-semibold'>AcceleraQA</h1><p class='text-xs text-gray-500 -mt-0.5'>Ask anything about QA & Compliance</p></div></div>
-      <div class='flex items-center gap-3 text-sm'><a id='adminLink' href='/admin/' class='text-indigo-600 hover:underline hidden'>Admin</a><button id='logoutBtn' class='px-3 py-1.5 rounded border bg-white hidden'>Log out</button></div>
+      <div class='flex items-center gap-3 text-sm'>
+        <a id='adminLink' href='/admin/' class='text-indigo-600 hover:underline hidden'>Admin</a>
+        <button id='logoutBtn' class='px-3 py-1.5 rounded border bg-white hidden'>Log out</button>
+        <button id='loginBtn' class='px-3 py-1.5 rounded border bg-white'>Sign in</button>
+      </div>
     </div>
   </header>
-  <main class='flex-1'><div class='max-w-4xl mx-auto px-4 py-6'><div id='whoami' class='text-xs text-gray-500 mb-2'></div><section id='chat' class='space-y-4'></section></div></main>
+  <main class='flex-1'>
+    <div class='max-w-4xl mx-auto px-4 py-6'>
+      <div id='whoami' class='text-xs text-gray-500 mb-2'>Browsing as guest</div>
+      <section id='chat' class='space-y-4'></section>
+    </div>
+  </main>
   <footer class='sticky bottom-0 bg-white border-t'><div class='max-w-4xl mx-auto px-4 py-3'>
     <div class='rounded-2xl border bg-white shadow-sm p-2'>
       <textarea id='input' rows='2' placeholder='Ask a quality question… (Shift+Enter = newline)' class='w-full resize-none outline-none p-2 rounded-xl'></textarea>
-      <div class='flex items-center justify-between px-1 pb-1'><small class='text-gray-500'>Powered by OpenAI</small><button id='send' class='px-3 py-1.5 rounded-xl btn-brand text-white disabled:opacity-50'>Send</button></div>
+      <div class='flex items-center justify-between px-1 pb-1'>
+        <small class='text-gray-500'>Powered by OpenAI</small>
+        <button id='send' class='px-3 py-1.5 rounded-xl btn-brand text-white disabled:opacity-50'>Send</button>
+      </div>
     </div></div></footer>
 </div>
 <script>
-  const BACKEND_URL='/.netlify/functions/chat'; const SEARCH_URL='/.netlify/functions/search'; const LOG_URL='/.netlify/functions/usage-logger';
-  const chatEl=document.getElementById('chat'); const inputEl=document.getElementById('input'); const sendBtn=document.getElementById('send'); const logoutBtn=document.getElementById('logoutBtn'); const whoamiEl=document.getElementById('whoami');
+  const BACKEND_URL='/.netlify/functions/chat';
+  const SEARCH_URL='/.netlify/functions/search';
+  const LOG_URL='/.netlify/functions/usage-logger';
+
+  const chatEl=document.getElementById('chat');
+  const inputEl=document.getElementById('input');
+  const sendBtn=document.getElementById('send');
+  const logoutBtn=document.getElementById('logoutBtn');
+  const loginBtn=document.getElementById('loginBtn');
+  const whoamiEl=document.getElementById('whoami');
 
   function esc(s){const d=document.createElement('div');d.innerText=String(s);return d.innerHTML;}
   function add(role,text){
@@ -51,33 +71,49 @@
     const e = payload?.error || {};
     const pieces = [];
     if (e.message) pieces.push(e.message);
-    if (e.code) pieces.push(`code: ${e.code}`);
-    if (e.provider) pieces.push(`provider: ${e.provider}`);
-    if (e.endpoint) pieces.push(`endpoint: ${e.endpoint}`);
-    if (e.requestId) pieces.push(`requestId: ${e.requestId}`);
-    if (e.cid) pieces.push(`cid: ${e.cid}`);
-    if (!pieces.length) pieces.push(`HTTP ${status || ''}`.trim());
+    if (e.code) pieces.push('code: ' + e.code);
+    if (e.provider) pieces.push('provider: ' + e.provider);
+    if (e.endpoint) pieces.push('endpoint: ' + e.endpoint);
+    if (e.requestId) pieces.push('requestId: ' + e.requestId);
+    if (e.cid) pieces.push('cid: ' + e.cid);
+    if (!pieces.length) pieces.push('HTTP ' + (status || ''));
     return 'Server error — ' + pieces.join(' · ');
   }
 
-  document.addEventListener('DOMContentLoaded',()=>{
-    if(window.netlifyIdentity){
-      window.netlifyIdentity.on('init',u=>{
-        if(!u) { location.replace('/login.html'); }
-        else {
-          whoamiEl.textContent='Signed in as '+(u.email||'');
-          logoutBtn.classList.remove('hidden');
-          const roles=(u.app_metadata&&u.app_metadata.roles)||[];
-          const link=document.getElementById('adminLink');
-          if(link){ if(roles.includes('admin')) link.classList.remove('hidden'); else link.classList.add('hidden'); }
-        }
-      });
-      window.netlifyIdentity.on('logout',()=> location.assign('/login.html'));
-      window.netlifyIdentity.init();
+  function updateIdentityUI(user){
+    if (user) {
+      whoamiEl.textContent = 'Signed in as ' + (user.email || '');
+      logoutBtn.classList.remove('hidden');
+      loginBtn.classList.add('hidden');
+      const roles=(user.app_metadata&&user.app_metadata.roles)||[];
+      const link=document.getElementById('adminLink');
+      if (link){ roles.includes('admin') ? link.classList.remove('hidden') : link.classList.add('hidden'); }
     } else {
-      location.assign('/login.html');
+      whoamiEl.textContent = 'Browsing as guest';
+      logoutBtn.classList.add('hidden');
+      loginBtn.classList.remove('hidden');
+      const link=document.getElementById('adminLink');
+      if (link) link.classList.add('hidden');
     }
-    logoutBtn.addEventListener('click',()=> window.netlifyIdentity && window.netlifyIdentity.logout());
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Identity without redirecting away from the page
+    const initIdentity = () => {
+      if (!window.netlifyIdentity) { setTimeout(initIdentity, 200); return; }
+      window.netlifyIdentity.on('init', user => updateIdentityUI(user));
+      window.netlifyIdentity.on('login', user => updateIdentityUI(user));
+      window.netlifyIdentity.on('logout', () => updateIdentityUI(null));
+      window.netlifyIdentity.init();
+    };
+    initIdentity();
+
+    loginBtn.addEventListener('click', () => {
+      if (window.netlifyIdentity) window.netlifyIdentity.open();
+    });
+    logoutBtn.addEventListener('click', () => {
+      if (window.netlifyIdentity) window.netlifyIdentity.logout();
+    });
   });
 
   async function send(){
@@ -87,7 +123,7 @@
     sendBtn.disabled = true;
 
     try{
-      // Build a small, capped context
+      // Build a small, capped context (best-effort search)
       let ctx = '';
       try{
         const sres = await fetch(SEARCH_URL,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ q }) });
@@ -96,7 +132,7 @@
           ctx = (sj.results||[]).slice(0,5).map(r=>'• '+(r.title||'')+': '+(r.text||'').slice(0,800)).join('\n');
           if (ctx.length > 6000) ctx = ctx.slice(0,6000) + '…';
         }
-      }catch(_){} // best-effort
+      }catch(_){}
 
       // Chat call (body matches server)
       const res = await fetch(BACKEND_URL,{

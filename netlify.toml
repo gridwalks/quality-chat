@@ -9,7 +9,6 @@
 [context.production]
   environment = { NODE_VERSION = "20" }
 
-# Add some security/CORS headers for static pages
 [[headers]]
   for = "/*"
   [headers.values]
