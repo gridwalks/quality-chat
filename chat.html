@@ -28,17 +28,135 @@
     </div></div></footer>
 </div>
 <script>
-  const BACKEND_URL='/.netlify/functions/chat'; const SEARCH_URL='/.netlify/functions/search'; const LOG_URL='/.netlify/functions/usage-logger';
-  const chatEl=document.getElementById('chat'); const inputEl=document.getElementById('input'); const sendBtn=document.getElementById('send'); const logoutBtn=document.getElementById('logoutBtn'); const whoamiEl=document.getElementById('whoami');
-  function esc(s){const d=document.createElement('div');d.innerText=s;return d.innerHTML;} function add(role,text){const div=document.createElement('div');div.className='text-sm';div.innerHTML=role==='user'?'<div class="bg-indigo-600 text-white rounded-xl p-2">'+esc(text)+'</div>':'<div class="bg-white rounded-xl border p-2">'+esc(text)+'</div>'; chatEl.appendChild(div); window.scrollTo(0,document.body.scrollHeight);}
-  document.addEventListener('DOMContentLoaded',()=>{ if(window.netlifyIdentity){ window.netlifyIdentity.on('init',u=>{ if(!u) { location.replace('/login.html'); } else { whoamiEl.textContent='Signed in as '+(u.email||''); logoutBtn.classList.remove('hidden'); const roles=(u.app_metadata&&u.app_metadata.roles)||[]; const link=document.getElementById('adminLink'); if(link){ if(roles.includes('admin')) link.classList.remove('hidden'); else link.classList.add('hidden'); } } }); window.netlifyIdentity.on('logout',()=> location.assign('/login.html')); window.netlifyIdentity.init(); } else { location.assign('/login.html'); } logoutBtn.addEventListener('click',()=> window.netlifyIdentity && window.netlifyIdentity.logout()); });
-  async function send(){ const q=inputEl.value.trim(); if(!q) return; add('user',q); inputEl.value=''; add('assistant','Thinking…'); try{ const sres=await fetch(SEARCH_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({q})}); const sj=sres.ok?await sres.json():{results:[]}; const ctx=(sj.results||[]).map(r=>'• '+r.title+': '+r.text).join('\n'); const res=await fetch(BACKEND_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'system',content:'You are AcceleraQA.'},{role:'system',content:ctx||'No extra context'},{role:'user',content:q}]})}); const data=await res.json(); chatEl.lastElementChild.remove(); if(!res.ok||data.error){ add('assistant','Server error.'); return;} const a=data.answer||'No response.'; add('assistant',a);
-    if(resources && resources.length){
-      const div=document.createElement('div');
-      div.className='text-xs text-gray-600 mt-1';
-      div.innerHTML='<div class="font-semibold mt-2">📚 Further learning resources:</div>'+resources.map(r=>'<div><a href="'+r.url+'" target="_blank" class="text-indigo-600 underline">'+r.label+'</a></div>').join('');
-      chatEl.appendChild(div);
-    } try{ fetch(LOG_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,answer:a})}); }catch(e){} }catch(e){ chatEl.lastElementChild.remove(); add('assistant','There was an error.'); } }
-  sendBtn.addEventListener('click',send); inputEl.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); }});
+  const BACKEND_URL='/.netlify/functions/chat';
+  const SEARCH_URL='/.netlify/functions/search';
+  const LOG_URL='/.netlify/functions/usage-logger';
+
+  const chatEl=document.getElementById('chat');
+  const inputEl=document.getElementById('input');
+  const sendBtn=document.getElementById('send');
+  const logoutBtn=document.getElementById('logoutBtn');
+  const whoamiEl=document.getElementById('whoami');
+
+  function esc(s){const d=document.createElement('div');d.innerText=String(s);return d.innerHTML;}
+  function add(role,text){
+    const div=document.createElement('div');div.className='text-sm';
+    div.innerHTML = role==='user'
+      ? '<div class="bg-indigo-600 text-white rounded-xl p-2">'+esc(text)+'</div>'
+      : '<div class="bg-white rounded-xl border p-2">'+esc(text)+'</div>';
+    chatEl.appendChild(div); window.scrollTo(0,document.body.scrollHeight);
+    return div;
+  }
+
+  // Try to parse JSON; fall back to raw text
+  async function parseMaybeJson(res){
+    const text = await res.text();
+    try { return { data: JSON.parse(text), raw: text }; }
+    catch { return { data: null, raw: text }; }
+  }
+
+  function showErrorFromPayload(payload, status){
+    const e = payload?.error || {};
+    const pieces = [];
+    if (e.message) pieces.push(e.message);
+    if (e.code) pieces.push(`code: ${e.code}`);
+    if (e.provider) pieces.push(`provider: ${e.provider}`);
+    if (e.endpoint) pieces.push(`endpoint: ${e.endpoint}`);
+    if (e.requestId) pieces.push(`requestId: ${e.requestId}`);
+    if (e.cid) pieces.push(`cid: ${e.cid}`);
+    if (!pieces.length) pieces.push(`HTTP ${status || ''}`.trim());
+    return 'Server error — ' + pieces.join(' · ');
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    if(window.netlifyIdentity){
+      window.netlifyIdentity.on('init',u=>{
+        if(!u) { location.replace('/login.html'); }
+        else {
+          whoamiEl.textContent='Signed in as '+(u.email||'');
+          logoutBtn.classList.remove('hidden');
+          const roles=(u.app_metadata&&u.app_metadata.roles)||[];
+          const link=document.getElementById('adminLink');
+          if(link){ if(roles.includes('admin')) link.classList.remove('hidden'); else link.classList.add('hidden'); }
+        }
+      });
+      window.netlifyIdentity.on('logout',()=> location.assign('/login.html'));
+      window.netlifyIdentity.init();
+    } else {
+      location.assign('/login.html');
+    }
+    logoutBtn.addEventListener('click',()=> window.netlifyIdentity && window.netlifyIdentity.logout());
+  });
+
+  async function send(){
+    const q=inputEl.value.trim(); if(!q) return;
+    add('user',q); inputEl.value='';
+    const thinking = add('assistant','Thinking…');
+    sendBtn.disabled = true;
+
+    try{
+      // 1) Optional search context
+      let ctx = '';
+      try{
+        const sres = await fetch(SEARCH_URL,{
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ q })
+        });
+        if (sres.ok){
+          const sj = await sres.json();
+          ctx = (sj.results||[]).map(r=>'• '+(r.title||'')+': '+(r.text||'')).join('\n');
+        }
+      }catch(_){} // best-effort; ignore search failures
+
+      // 2) Call chat function with the CORRECT body shape
+      const res = await fetch(BACKEND_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ q, context: ctx || 'No extra context' })
+      });
+
+      const { data, raw } = await parseMaybeJson(res);
+      chatEl.removeChild(thinking);
+
+      // If HTTP error or payload indicates failure
+      if (!res.ok || (data && data.ok === false) || (data && data.error)){
+        const msg = data ? showErrorFromPayload(data, res.status)
+                         : `Server error — HTTP ${res.status} · ${raw?.slice(0,200)}`;
+        add('assistant', msg);
+        return;
+      }
+
+      // 3) Success path
+      const answer = (data && (data.answer || data.output_text)) || 'No response.';
+      add('assistant', answer);
+
+      const resources = (data && data.resources) || [];
+      if (Array.isArray(resources) && resources.length){
+        const div=document.createElement('div');
+        div.className='text-xs text-gray-600 mt-1';
+        div.innerHTML='<div class="font-semibold mt-2">📚 Further learning resources:</div>' +
+          resources.map(r=>'<div><a href="'+esc(r.url)+'" target="_blank" class="text-indigo-600 underline">'+esc(r.label||r.title||r.url)+'</a></div>').join('');
+        chatEl.appendChild(div);
+      }
+
+      // 4) Fire-and-forget logging
+      try{
+        fetch(LOG_URL,{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ question:q, answer:answer })
+        });
+      }catch(_){}
+    }catch(e){
+      try{ chatEl.removeChild(thinking); }catch(_){}
+      add('assistant','There was an error — '+(e?.message || String(e)));
+    } finally {
+      sendBtn.disabled = false;
+    }
+  }
+
+  sendBtn.addEventListener('click',send);
+  inputEl.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); }});
 </script>
+
 </body></html>
