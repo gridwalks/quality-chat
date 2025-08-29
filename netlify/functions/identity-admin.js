@@ -1,22 +1,2 @@
-export default async (req, context) => {
-  const { identity, clientContext } = context;
-  const { action, email } = await req.json();
-
-  if (!identity || !clientContext || !clientContext.identity || !clientContext.identity.token) {
-    return new Response(JSON.stringify({ error: "Missing Identity admin token" }), { status: 401 });
-  }
-
-  const headers = {
-    Authorization: `Bearer ${clientContext.identity.token}`,
-    "Content-Type": "application/json"
-  };
-
-  let url = "";
-  if (action === "invite") url = `${identity.url}/invite`;
-  else if (action === "recovery") url = `${identity.url}/recover`;
-  else return new Response(JSON.stringify({ error: "Unknown action" }), { status: 400 });
-
-  const res = await fetch(url, { method: "POST", headers, body: JSON.stringify({ email }) });
-  const data = await res.json();
-  return new Response(JSON.stringify(data), { status: res.status });
-};
+const CORS={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Authorization'};
+export default async (req, context)=>{ if(req.method==='OPTIONS') return new Response(null,{headers:CORS}); try{ const { identity, clientContext } = context; const { action, email } = await req.json(); const roles=context?.clientContext?.user?.app_metadata?.roles||[]; if(!Array.isArray(roles)||!roles.includes('admin')){ return new Response(JSON.stringify({error:'Admin only'}),{status:403,headers:{'Content-Type':'application/json',...CORS}});} if(!identity||!clientContext||!clientContext.identity||!clientContext.identity.token){ return new Response(JSON.stringify({error:'Missing Identity admin token'}),{status:401,headers:{'Content-Type':'application/json',...CORS}});} const headers={ Authorization:`Bearer ${clientContext.identity.token}`, 'Content-Type':'application/json'}; let url=''; if(action==='invite') url=`${identity.url}/invite`; else if(action==='recovery') url=`${identity.url}/recover`; else return new Response(JSON.stringify({error:'Unknown action'}),{status:400,headers:{'Content-Type':'application/json',...CORS}}); const res=await fetch(url,{method:'POST',headers,body:JSON.stringify({email})}); const text=await res.text(); return new Response(text,{status:res.status,headers:{'Content-Type':'application/json',...CORS}});} catch(e){ return new Response(JSON.stringify({error:e.message}),{status:500,headers:{'Content-Type':'application/json',...CORS}});} };

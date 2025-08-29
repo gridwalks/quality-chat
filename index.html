@@ -1,1 +1,92 @@
-<!doctype html><title>Quality Chat</title><h1>Quality Chat (Styled UI here)</h1>
+<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'/><meta name='viewport' content='width=device-width, initial-scale=1'/>
+<title>AcceleraQA — Learning AI for QA Teams</title>
+  <link rel='preconnect' href='https://fonts.googleapis.com'>
+  <link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>
+  <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap' rel='stylesheet'>
+  <script src='https://cdn.tailwindcss.com'></script>
+  <script defer src='https://identity.netlify.com/v1/netlify-identity-widget.js'></script>
+  <style>
+    :root { --brand:#4F46E5; --brand-600:#4F46E5; --brand-700:#4338CA; }
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    .btn-brand{background:var(--brand-600);color:#fff}
+    .btn-brand:hover{background:var(--brand-700)}
+  </style>
+</head>
+<body class='bg-gray-50 text-gray-900'>
+<header class='bg-white border-b'>
+  <div class='max-w-6xl mx-auto px-4 py-4 flex items-center justify-between'>
+    <div class='flex items-center gap-3'><img src='/assets/logo.svg' class='h-9 w-9 rounded-2xl shadow' alt=''/><span class='font-semibold'>AcceleraQA</span></div>
+    <nav class='flex items-center gap-2 text-sm'>
+      <a href='#features' class='px-3 py-1.5 rounded hover:bg-gray-100'>Features</a>
+      <a href='#pricing' class='px-3 py-1.5 rounded hover:bg-gray-100'>Pricing</a>
+      <a href='#security' class='px-3 py-1.5 rounded hover:bg-gray-100'>Security</a>
+      <a href='#contact' class='px-3 py-1.5 rounded hover:bg-gray-100'>Contact</a>
+      <a id='chatLink' href='/chat.html' class='px-3 py-1.5 rounded btn-brand hidden'>Open Chat</a>
+      <a id='loginLink' href='/login.html' class='px-3 py-1.5 rounded border bg-white'>Sign in</a>
+      <button id='logoutBtn' class='px-3 py-1.5 rounded border bg-white hidden'>Log out</button>
+    </nav>
+  </div>
+</header>
+<main>
+  <section class='bg-gradient-to-b from-white to-gray-50'>
+    <div class='max-w-6xl mx-auto px-4 py-16 grid md:grid-cols-2 gap-8 items-center'>
+      <div>
+        <h1 class='text-3xl md:text-4xl font-bold leading-tight'>A Learning AI Assistant for Quality Assurance teams</h1>
+        <p class='text-gray-600 mt-3 text-lg'>Accelerate onboarding, standardize answers, and boost compliance confidence. AcceleraQA delivers clear, actionable guidance backed by standards and your internal FAQs.</p>
+        <div class='mt-6 flex flex-wrap gap-3'>
+          <a id='ctaPrimary' href='/login.html' class='px-5 py-2.5 rounded-xl btn-brand'>Get started</a>
+          <a href='#features' class='px-5 py-2.5 rounded-xl border bg-white'>See features</a>
+        </div>
+        <p id='whoami' class='text-xs text-gray-500 mt-3'></p>
+      </div>
+      <div class='bg-white border rounded-2xl shadow p-4'>
+        <div class='grid grid-cols-2 gap-3 text-sm'>
+          <div class='p-3 border rounded-xl'><div class='font-semibold'>Onboard faster</div><div class='text-gray-600'>Instant, consistent answers with references.</div></div>
+          <div class='p-3 border rounded-xl'><div class='font-semibold'>Quality by design</div><div class='text-gray-600'>Prompts for CAPA, validation, and data integrity.</div></div>
+          <div class='p-3 border rounded-xl'><div class='font-semibold'>Your knowledge</div><div class='text-gray-600'>RAG over a simple JSON FAQ.</div></div>
+          <div class='p-3 border rounded-xl'><div class='font-semibold'>Access control</div><div class='text-gray-600'>Invite-only sign-in; admin role.</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id='features' class='max-w-6xl mx-auto px-4 py-14'>
+    <h2 class='text-2xl font-bold mb-4'>Features for QA organizations</h2>
+    <ul class='grid md:grid-cols-3 gap-4 text-sm'>
+      <li class='bg-white border rounded-xl p-4'><div class='font-semibold mb-1'>Regulatory-aware answers</div><div class='text-gray-600'>Cites 21 CFR Part 11, EU GMP Annex 11, ICH E6(R3).</div></li>
+      <li class='bg-white border rounded-xl p-4'><div class='font-semibold mb-1'>RAG over your FAQs</div><div class='text-gray-600'>Seed and edit via Admin panel.</div></li>
+      <li class='bg-white border rounded-xl p-4'><div class='font-semibold mb-1'>Admin tools</div><div class='text-gray-600'>Invites, recovery, logs, exports.</div></li>
+    </ul>
+  </section>
+  <section id='pricing' class='bg-white border-y'>
+    <div class='max-w-6xl mx-auto px-4 py-14'>
+      <h2 class='text-2xl font-bold mb-4'>Pricing</h2>
+      <div class='grid md:grid-cols-3 gap-4'>
+        <div class='border rounded-xl p-5'><h3 class='font-semibold'>Starter</h3><div class='text-3xl font-bold mt-2'>$0</div><p class='text-gray-600 text-sm'>Self-host on Netlify</p><ul class='text-sm mt-3 space-y-1'><li>• RAG over FAQs</li><li>• Identity (invite-only)</li><li>• Basic usage logs</li></ul></div>
+        <div class='border-2 border-indigo-600 rounded-xl p-5 shadow-sm'><h3 class='font-semibold'>Team</h3><div class='text-3xl font-bold mt-2'>$49/mo</div><p class='text-gray-600 text-sm'>Up to 25 users</p><ul class='text-sm mt-3 space-y-1'><li>• Admin dashboard</li><li>• Exports (JSON/CSV)</li><li>• Email templates</li></ul></div>
+        <div class='border rounded-xl p-5'><h3 class='font-semibold'>Enterprise</h3><div class='text-3xl font-bold mt-2'>Custom</div><p class='text-gray-600 text-sm'>SAML/SSO, audit, training</p><ul class='text-sm mt-3 space-y-1'><li>• SSO (Okta/Azure AD)</li><li>• Durable logs (DB)</li><li>• Custom RAG connectors</li></ul></div>
+      </div>
+    </div>
+  </section>
+  <section id='security' class='max-w-6xl mx-auto px-4 py-14'>
+    <h2 class='text-2xl font-bold mb-3'>Security & access</h2>
+    <p class='text-gray-600'>Invite-only Netlify Identity. Admins can assign the <code>admin</code> role. Chat uses a server-side API key—your key never runs in the browser.</p>
+  </section>
+  <section id='contact' class='max-w-6xl mx-auto px-4 py-14'>
+    <h2 class='text-2xl font-bold mb-4'>Contact</h2>
+    <form name='contact' method='POST' data-netlify='true' class='bg-white border rounded-xl p-5 max-w-lg'>
+      <input type='hidden' name='form-name' value='contact'>
+      <label class='block text-sm mb-3'>Name<input name='name' required class='mt-1 w-full border rounded p-2'/></label>
+      <label class='block text-sm mb-3'>Email<input name='email' type='email' required class='mt-1 w-full border rounded p-2'/></label>
+      <label class='block text-sm mb-3'>Message<textarea name='message' rows='4' required class='mt-1 w-full border rounded p-2'></textarea></label>
+      <button class='px-4 py-2 rounded btn-brand'>Send</button>
+    </form>
+  </section>
+</main>
+<footer class='py-8 text-center text-sm text-gray-500'>© <span id='year'></span> AcceleraQA</footer>
+<script>
+  const loginLink=document.getElementById('loginLink'); const logoutBtn=document.getElementById('logoutBtn'); const chatLink=document.getElementById('chatLink'); const ctaPrimary=document.getElementById('ctaPrimary');
+  document.getElementById('year').textContent=new Date().getFullYear();
+  function setLoggedIn(user){ if(user){ loginLink.classList.add('hidden'); logoutBtn.classList.remove('hidden'); chatLink.classList.remove('hidden'); ctaPrimary.href='/chat.html'; ctaPrimary.textContent='Open Chat'; } else { logoutBtn.classList.add('hidden'); loginLink.classList.remove('hidden'); chatLink.classList.add('hidden'); ctaPrimary.href='/login.html'; ctaPrimary.textContent='Get started'; } }
+  document.addEventListener('DOMContentLoaded',()=>{ if(window.netlifyIdentity){ window.netlifyIdentity.on('init',setLoggedIn); window.netlifyIdentity.on('login',u=>{ setLoggedIn(u); location.assign('/chat.html');}); window.netlifyIdentity.on('logout',()=> setLoggedIn(null)); window.netlifyIdentity.init(); } else { loginLink.classList.remove('hidden'); } logoutBtn.addEventListener('click',()=> window.netlifyIdentity && window.netlifyIdentity.logout()); });
+</script>
+</body></html>
