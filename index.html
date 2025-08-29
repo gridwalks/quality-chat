@@ -1,5 +1,5 @@
 <!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'/><meta name='viewport' content='width=device-width, initial-scale=1'/>
-<title>AcceleraQA — Learning AI for QA Teams</title>
+<title>AcceleraQA</title>
   <link rel='preconnect' href='https://fonts.googleapis.com'>
   <link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>
   <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap' rel='stylesheet'>
@@ -13,80 +13,130 @@
   </style>
 </head>
 <body class='bg-gray-50 text-gray-900'>
-<header class='bg-white border-b'>
-  <div class='max-w-6xl mx-auto px-4 py-4 flex items-center justify-between'>
-    <div class='flex items-center gap-3'><img src='/assets/logo.svg' class='h-9 w-9 rounded-2xl shadow' alt=''/><span class='font-semibold'>AcceleraQA</span></div>
-    <nav class='flex items-center gap-2 text-sm'>
-      <a href='#features' class='px-3 py-1.5 rounded hover:bg-gray-100'>Features</a>
-      <a href='#pricing' class='px-3 py-1.5 rounded hover:bg-gray-100'>Pricing</a>
-      <a href='#security' class='px-3 py-1.5 rounded hover:bg-gray-100'>Security</a>
-      <a href='#contact' class='px-3 py-1.5 rounded hover:bg-gray-100'>Contact</a>
-      <a id='chatLink' href='/chat.html' class='px-3 py-1.5 rounded btn-brand hidden'>Open Chat</a>
-      <a id='loginLink' href='/login.html' class='px-3 py-1.5 rounded border bg-white'>Sign in</a>
-      <button id='logoutBtn' class='px-3 py-1.5 rounded border bg-white hidden'>Log out</button>
-    </nav>
-  </div>
-</header>
-<main>
-  <section class='bg-gradient-to-b from-white to-gray-50'>
-    <div class='max-w-6xl mx-auto px-4 py-16 grid md:grid-cols-2 gap-8 items-center'>
-      <div>
-        <h1 class='text-3xl md:text-4xl font-bold leading-tight'>A Learning AI Assistant for Quality Assurance teams</h1>
-        <p class='text-gray-600 mt-3 text-lg'>Accelerate onboarding, standardize answers, and boost compliance confidence. AcceleraQA delivers clear, actionable guidance backed by standards and your internal FAQs.</p>
-        <div class='mt-6 flex flex-wrap gap-3'>
-          <a id='ctaPrimary' href='/login.html' class='px-5 py-2.5 rounded-xl btn-brand'>Get started</a>
-          <a href='#features' class='px-5 py-2.5 rounded-xl border bg-white'>See features</a>
-        </div>
-        <p id='whoami' class='text-xs text-gray-500 mt-3'></p>
-      </div>
-      <div class='bg-white border rounded-2xl shadow p-4'>
-        <div class='grid grid-cols-2 gap-3 text-sm'>
-          <div class='p-3 border rounded-xl'><div class='font-semibold'>Onboard faster</div><div class='text-gray-600'>Instant, consistent answers with references.</div></div>
-          <div class='p-3 border rounded-xl'><div class='font-semibold'>Quality by design</div><div class='text-gray-600'>Prompts for CAPA, validation, and data integrity.</div></div>
-          <div class='p-3 border rounded-xl'><div class='font-semibold'>Your knowledge</div><div class='text-gray-600'>RAG over a simple JSON FAQ.</div></div>
-          <div class='p-3 border rounded-xl'><div class='font-semibold'>Access control</div><div class='text-gray-600'>Invite-only sign-in; admin role.</div></div>
-        </div>
-      </div>
+<div class='min-h-screen flex flex-col'>
+  <header class='bg-white border-b sticky top-0 z-10'>
+    <div class='max-w-4xl mx-auto px-4 py-4 flex items-center justify-between'>
+      <div class='flex items-center gap-3'><a href='/index.html'><img src='/assets/logo.svg' class='h-9 w-9 rounded-2xl shadow' alt=''/></a><div><h1 class='text-lg font-semibold'>AcceleraQA</h1><p class='text-xs text-gray-500 -mt-0.5'>Ask anything about QA & Compliance</p></div></div>
+      <div class='flex items-center gap-3 text-sm'><a id='adminLink' href='/admin/' class='text-indigo-600 hover:underline hidden'>Admin</a><button id='logoutBtn' class='px-3 py-1.5 rounded border bg-white hidden'>Log out</button></div>
     </div>
-  </section>
-  <section id='features' class='max-w-6xl mx-auto px-4 py-14'>
-    <h2 class='text-2xl font-bold mb-4'>Features for QA organizations</h2>
-    <ul class='grid md:grid-cols-3 gap-4 text-sm'>
-      <li class='bg-white border rounded-xl p-4'><div class='font-semibold mb-1'>Regulatory-aware answers</div><div class='text-gray-600'>Cites 21 CFR Part 11, EU GMP Annex 11, ICH E6(R3).</div></li>
-      <li class='bg-white border rounded-xl p-4'><div class='font-semibold mb-1'>RAG over your FAQs</div><div class='text-gray-600'>Seed and edit via Admin panel.</div></li>
-      <li class='bg-white border rounded-xl p-4'><div class='font-semibold mb-1'>Admin tools</div><div class='text-gray-600'>Invites, recovery, logs, exports.</div></li>
-    </ul>
-  </section>
-  <section id='pricing' class='bg-white border-y'>
-    <div class='max-w-6xl mx-auto px-4 py-14'>
-      <h2 class='text-2xl font-bold mb-4'>Pricing</h2>
-      <div class='grid md:grid-cols-3 gap-4'>
-        <div class='border rounded-xl p-5'><h3 class='font-semibold'>Starter</h3><div class='text-3xl font-bold mt-2'>$0</div><p class='text-gray-600 text-sm'>Self-host on Netlify</p><ul class='text-sm mt-3 space-y-1'><li>• RAG over FAQs</li><li>• Identity (invite-only)</li><li>• Basic usage logs</li></ul></div>
-        <div class='border-2 border-indigo-600 rounded-xl p-5 shadow-sm'><h3 class='font-semibold'>Team</h3><div class='text-3xl font-bold mt-2'>$49/mo</div><p class='text-gray-600 text-sm'>Up to 25 users</p><ul class='text-sm mt-3 space-y-1'><li>• Admin dashboard</li><li>• Exports (JSON/CSV)</li><li>• Email templates</li></ul></div>
-        <div class='border rounded-xl p-5'><h3 class='font-semibold'>Enterprise</h3><div class='text-3xl font-bold mt-2'>Custom</div><p class='text-gray-600 text-sm'>SAML/SSO, audit, training</p><ul class='text-sm mt-3 space-y-1'><li>• SSO (Okta/Azure AD)</li><li>• Durable logs (DB)</li><li>• Custom RAG connectors</li></ul></div>
-      </div>
-    </div>
-  </section>
-  <section id='security' class='max-w-6xl mx-auto px-4 py-14'>
-    <h2 class='text-2xl font-bold mb-3'>Security & access</h2>
-    <p class='text-gray-600'>Invite-only Netlify Identity. Admins can assign the <code>admin</code> role. Chat uses a server-side API key—your key never runs in the browser.</p>
-  </section>
-  <section id='contact' class='max-w-6xl mx-auto px-4 py-14'>
-    <h2 class='text-2xl font-bold mb-4'>Contact</h2>
-    <form name='contact' method='POST' data-netlify='true' class='bg-white border rounded-xl p-5 max-w-lg'>
-      <input type='hidden' name='form-name' value='contact'>
-      <label class='block text-sm mb-3'>Name<input name='name' required class='mt-1 w-full border rounded p-2'/></label>
-      <label class='block text-sm mb-3'>Email<input name='email' type='email' required class='mt-1 w-full border rounded p-2'/></label>
-      <label class='block text-sm mb-3'>Message<textarea name='message' rows='4' required class='mt-1 w-full border rounded p-2'></textarea></label>
-      <button class='px-4 py-2 rounded btn-brand'>Send</button>
-    </form>
-  </section>
-</main>
-<footer class='py-8 text-center text-sm text-gray-500'>© <span id='year'></span> AcceleraQA</footer>
+  </header>
+  <main class='flex-1'><div class='max-w-4xl mx-auto px-4 py-6'><div id='whoami' class='text-xs text-gray-500 mb-2'></div><section id='chat' class='space-y-4'></section></div></main>
+  <footer class='sticky bottom-0 bg-white border-t'><div class='max-w-4xl mx-auto px-4 py-3'>
+    <div class='rounded-2xl border bg-white shadow-sm p-2'>
+      <textarea id='input' rows='2' placeholder='Ask a quality question… (Shift+Enter = newline)' class='w-full resize-none outline-none p-2 rounded-xl'></textarea>
+      <div class='flex items-center justify-between px-1 pb-1'><small class='text-gray-500'>Powered by OpenAI</small><button id='send' class='px-3 py-1.5 rounded-xl btn-brand text-white disabled:opacity-50'>Send</button></div>
+    </div></div></footer>
+</div>
 <script>
-  const loginLink=document.getElementById('loginLink'); const logoutBtn=document.getElementById('logoutBtn'); const chatLink=document.getElementById('chatLink'); const ctaPrimary=document.getElementById('ctaPrimary');
-  document.getElementById('year').textContent=new Date().getFullYear();
-  function setLoggedIn(user){ if(user){ loginLink.classList.add('hidden'); logoutBtn.classList.remove('hidden'); chatLink.classList.remove('hidden'); ctaPrimary.href='/chat.html'; ctaPrimary.textContent='Open Chat'; } else { logoutBtn.classList.add('hidden'); loginLink.classList.remove('hidden'); chatLink.classList.add('hidden'); ctaPrimary.href='/login.html'; ctaPrimary.textContent='Get started'; } }
-  document.addEventListener('DOMContentLoaded',()=>{ if(window.netlifyIdentity){ window.netlifyIdentity.on('init',setLoggedIn); window.netlifyIdentity.on('login',u=>{ setLoggedIn(u); location.assign('/chat.html');}); window.netlifyIdentity.on('logout',()=> setLoggedIn(null)); window.netlifyIdentity.init(); } else { loginLink.classList.remove('hidden'); } logoutBtn.addEventListener('click',()=> window.netlifyIdentity && window.netlifyIdentity.logout()); });
+  const BACKEND_URL='/.netlify/functions/chat'; const SEARCH_URL='/.netlify/functions/search'; const LOG_URL='/.netlify/functions/usage-logger';
+  const chatEl=document.getElementById('chat'); const inputEl=document.getElementById('input'); const sendBtn=document.getElementById('send'); const logoutBtn=document.getElementById('logoutBtn'); const whoamiEl=document.getElementById('whoami');
+
+  function esc(s){const d=document.createElement('div');d.innerText=String(s);return d.innerHTML;}
+  function add(role,text){
+    const div=document.createElement('div');div.className='text-sm';
+    div.innerHTML = role==='user'
+      ? '<div class="bg-indigo-600 text-white rounded-xl p-2">'+esc(text)+'</div>'
+      : '<div class="bg-white rounded-xl border p-2">'+esc(text)+'</div>';
+    chatEl.appendChild(div); window.scrollTo(0,document.body.scrollHeight);
+    return div;
+  }
+
+  async function parseMaybeJson(res){
+    const text = await res.text();
+    try { return { data: JSON.parse(text), raw: text }; }
+    catch { return { data: null, raw: text }; }
+  }
+
+  function showErrorFromPayload(payload, status){
+    const e = payload?.error || {};
+    const pieces = [];
+    if (e.message) pieces.push(e.message);
+    if (e.code) pieces.push(`code: ${e.code}`);
+    if (e.provider) pieces.push(`provider: ${e.provider}`);
+    if (e.endpoint) pieces.push(`endpoint: ${e.endpoint}`);
+    if (e.requestId) pieces.push(`requestId: ${e.requestId}`);
+    if (e.cid) pieces.push(`cid: ${e.cid}`);
+    if (!pieces.length) pieces.push(`HTTP ${status || ''}`.trim());
+    return 'Server error — ' + pieces.join(' · ');
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    if(window.netlifyIdentity){
+      window.netlifyIdentity.on('init',u=>{
+        if(!u) { location.replace('/login.html'); }
+        else {
+          whoamiEl.textContent='Signed in as '+(u.email||'');
+          logoutBtn.classList.remove('hidden');
+          const roles=(u.app_metadata&&u.app_metadata.roles)||[];
+          const link=document.getElementById('adminLink');
+          if(link){ if(roles.includes('admin')) link.classList.remove('hidden'); else link.classList.add('hidden'); }
+        }
+      });
+      window.netlifyIdentity.on('logout',()=> location.assign('/login.html'));
+      window.netlifyIdentity.init();
+    } else {
+      location.assign('/login.html');
+    }
+    logoutBtn.addEventListener('click',()=> window.netlifyIdentity && window.netlifyIdentity.logout());
+  });
+
+  async function send(){
+    const q=inputEl.value.trim(); if(!q) return;
+    add('user',q); inputEl.value='';
+    const thinking = add('assistant','Thinking…');
+    sendBtn.disabled = true;
+
+    try{
+      // Build a small, capped context
+      let ctx = '';
+      try{
+        const sres = await fetch(SEARCH_URL,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ q }) });
+        if (sres.ok){
+          const sj = await sres.json();
+          ctx = (sj.results||[]).slice(0,5).map(r=>'• '+(r.title||'')+': '+(r.text||'').slice(0,800)).join('\n');
+          if (ctx.length > 6000) ctx = ctx.slice(0,6000) + '…';
+        }
+      }catch(_){} // best-effort
+
+      // Chat call (body matches server)
+      const res = await fetch(BACKEND_URL,{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ q, context: ctx || 'No extra context' })
+      });
+
+      const { data, raw } = await parseMaybeJson(res);
+      chatEl.removeChild(thinking);
+
+      if (!res.ok || (data && (data.ok === false || data.error))){
+        const msg = data ? showErrorFromPayload(data, res.status)
+                         : `Server error — HTTP ${res.status} · ${raw?.slice(0,200)}`;
+        add('assistant', msg);
+        return;
+      }
+
+      const answer = (data && (data.answer || data.output_text)) || 'No response.';
+      add('assistant', answer);
+
+      const resources = (data && data.resources) || [];
+      if (Array.isArray(resources) && resources.length){
+        const div=document.createElement('div');
+        div.className='text-xs text-gray-600 mt-1';
+        div.innerHTML='<div class="font-semibold mt-2">📚 Further learning resources:</div>' +
+          resources.map(r=>'<div><a href="'+esc(r.url)+'" target="_blank" class="text-indigo-600 underline">'+esc(r.label||r.title||r.url)+'</a></div>').join('');
+        chatEl.appendChild(div);
+      }
+
+      // Fire-and-forget log
+      try{ fetch(LOG_URL,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ question:q, answer:answer }) }); }catch(_){}
+    }catch(e){
+      try{ chatEl.removeChild(thinking); }catch(_){}
+      add('assistant','There was an error — '+(e?.message || String(e)));
+    } finally {
+      sendBtn.disabled = false;
+    }
+  }
+
+  sendBtn.addEventListener('click',send);
+  inputEl.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); }});
 </script>
 </body></html>

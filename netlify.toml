@@ -1,7 +1,17 @@
 [build]
-  command = ""
   publish = "."
+  functions = "netlify/functions"
 
 [functions]
-  directory = "netlify/functions"
   node_bundler = "esbuild"
+  external_node_modules = []
+
+[context.production]
+  environment = { NODE_VERSION = "20" }
+
+# Add some security/CORS headers for static pages
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

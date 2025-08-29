@@ -1,3 +1,26 @@
-import { readFile } from 'node:fs/promises';
-function scoreItem(item, query){const q=String(query||'').toLowerCase();let s=0;item.title.toLowerCase().split(/[^a-z0-9]+/).forEach(w=>{if(w&&q.includes(w))s+=2});const words=Array.from(new Set(item.text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)));words.forEach(w=>{if(q.includes(w))s+=1});(item.tags||[]).forEach(tag=>{const t=String(tag).toLowerCase();if(t&&q.includes(t))s+=3});return s}
-export default async (request)=>{try{if(request.method==='OPTIONS')return new Response(null,{headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type'}});if(request.method!=='POST')return new Response(JSON.stringify({error:'Use POST'}),{status:405,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});const {q=''}=await request.json();const fileUrl=new URL('../../knowledge/faqs.json',import.meta.url);const db=JSON.parse(await readFile(fileUrl,'utf8'));const scored=db.map(item=>({...item,score:scoreItem(item,q)})).sort((a,b)=>b.score-a.score).slice(0,3);return new Response(JSON.stringify({results:scored}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}})}catch(e){return new Response(JSON.stringify({error:e.message}),{status:500,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}})}};
+// netlify/functions/search.js
+export const handler = async (event) => {
+  const CORS = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  };
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS, body: '' };
+
+  try {
+    const b = JSON.parse(event.body || '{}');
+    const q = (b.q || '').toString();
+    // Return an empty result set (fast). Replace with your real search later.
+    return {
+      statusCode: 200,
+      headers: { ...CORS, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ok: true, results: [] })
+    };
+  } catch (e) {
+    return {
+      statusCode: 400,
+      headers: { ...CORS, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ok:false, error: { message: 'Bad JSON', details: String(e) } })
+    };
+  }
+};
