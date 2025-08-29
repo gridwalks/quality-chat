@@ -1,13 +1,46 @@
-<!DOCTYPE html><html lang='en'><head>
-  <meta name="robots" content="noindex,nofollow"/>
-  <style>html.auth-checking body{visibility:hidden}</style><meta charset='UTF-8'/><meta name='viewport' content='width=device-width, initial-scale=1'/><title>Admin · AcceleraQA</title>
-  <link rel='preconnect' href='https://fonts.googleapis.com'>
-  <link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>
-  <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap' rel='stylesheet'>
-  <script src='https://cdn.tailwindcss.com'></script>
-  <script defer src='https://identity.netlify.com/v1/netlify-identity-widget.js'></script>
-  <style>body{font-family:Inter,system-ui,sans-serif}</style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin · AcceleraQA</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  <style>
+    body { font-family: Inter, system-ui, sans-serif; }
+    /* Hide while we verify auth quickly to prevent flicker */
+    html.auth-checking body { visibility: hidden; }
+  </style>
+
+  <!-- Instant gate using stored Netlify Identity user -->
+  <script>
+    (function () {
+      try {
+        document.documentElement.classList.add('auth-checking');
+        var raw = localStorage.getItem('gotrue.user');
+        if (!raw) { location.replace('/login.html'); return; }
+        var u = JSON.parse(raw);
+        var roles = (u && u.app_metadata && Array.isArray(u.app_metadata.roles)) ? u.app_metadata.roles : [];
+        if (!roles.includes('admin')) { location.replace('/access-denied.html'); return; }
+        document.documentElement.classList.remove('auth-checking');
+      } catch (e) {
+        location.replace('/access-denied.html');
+      }
+    })();
+  </script>
 </head>
-  <body>
-<script>(function(){try{document.documentElement.classList.add('auth-checking');var raw=localStorage.getItem('gotrue.user');if(!raw){location.replace('/login.html');return;}var u=JSON.parse(raw);var roles=(u.app_metadata&&u.app_metadata.roles)||[];if(!Array.isArray(roles)||!roles.includes('admin')){location.replace('/access-denied.html');return;}document.documentElement.classList.remove('auth-checking');}catch(e){location.replace('/access-denied.html');}})();</script>
- class='bg-gray-50 min-h-screen flex items-center justify-center text-gray-900'>  <div class='max-w-md w-full p-6 bg-white rounded-2xl shadow border text-center'>    <h1 class='text-2xl font-bold mb-6'>Admin Dashboard</h1>    <div id='auth' class='text-sm text-gray-600 mb-6'>Checking login…</div>    <div class='space-y-3'>      <a href='/admin/kb.html' class='block w-full px-4 py-3 rounded-xl border'>📚 Knowledge Base</a>      <a href='/admin/users.html' class='block w-full px-4 py-3 rounded-xl border'>👥 User Management</a>      <a href='/admin/logs.html' class='block w-full px-4 py-3 rounded-xl border'>📊 Usage Logs</a>      <a href='/admin/resources.html' class='block w-full px-4 py-3 rounded-xl border'>🔗 Resources Editor</a>    </div>    <div class='mt-6'><a href='/chat.html' class='text-indigo-600 hover:underline text-sm'>← Back to Chat</a></div>    <div class='mt-2'><button id='logoutBtn' class='text-sm text-gray-500 hover:underline hidden'>Log out</button></div>  </div><script>  const auth=document.getElementById('auth'); const logoutBtn=document.getElementById('logoutBtn');  function gate(user){ if(!user){ location.replace('/login.html'); return; } const roles=(user.app_metadata&&user.app_metadata.roles)||[]; if(!roles.includes('admin')){ location.replace('/access-denied.html'); return; } auth.textContent='Signed in as '+user.email+' (admin)'; logoutBtn.classList.remove('hidden'); }  document.addEventListener('DOMContentLoaded',()=>{ if(window.netlifyIdentity){ window.netlifyIdentity.on('init',gate); window.netlifyIdentity.on('logout',()=> location.assign('/login.html')); window.netlifyIdentity.init(); } else { location.assign('/login.html'); } logoutBtn.addEventListener('click',()=> window.netlifyIdentity && window.netlifyIdentity.logout()); });</script></body></html>
+
+<body class="bg-gray-50 min-h-screen flex items-center justify-center text-gray-900">
+  <div class="max-w-md w-full p-6 bg-white rounded-2xl shadow border text-center">
+    <h1 class="text-2xl font-bold mb-6">Admin Dashboard</h1>
+
+    <div id="auth" class="text-sm text-gray-600 mb-6">Checking login…</div>
+
+    <div class="space-y-3">
+      <a href="/admin/kb.html" class="block w-full px-4 py-3 roun
